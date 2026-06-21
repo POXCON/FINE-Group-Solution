@@ -26,6 +26,13 @@ env/
 htmlcov/
 .coverage
 coverage.xml
+coverage/
+
+# tsc が config.ts から生成する成果物（ソースは .ts）
+/Invoice-Search/frontend/vite.config.js
+/Invoice-Search/frontend/vite.config.d.ts
+/Invoice-Search/frontend/tailwind.config.js
+/Invoice-Search/frontend/tailwind.config.d.ts
 
 # Env / Secrets
 .env
