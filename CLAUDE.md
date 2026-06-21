@@ -69,7 +69,7 @@ FINE-Group-Solution/            ← リポジトリルート（= 01. FINE-Grp）
 | バックエンド実行 | **AWS Lambda + API Gateway**（FastAPI を Mangum で接続） | ゼロスケール・従量課金。低〜スパイク負荷で最安。 |
 | DB | **Aurora Serverless v2 + Data API（アイドル時 0 ACU で自動休止）** | 当グループの想定利用（1 店舗あたり 1 日数名・同時アクセスほぼ無し）では**大半が休止状態**となり、課金はストレージ中心で最安。Data API 利用で **VPC/NAT 不要**。 |
 | ファイル | **S3** | 従量・無料枠あり。 |
-| IaC | **AWS CDK もしくは Terraform** | 構成はコード管理。 |
+| IaC | **AWS CDK（既定・TypeScript）** | 構成はコード管理。デプロイ手順は [`docs/runbooks/aws-deployment.md`](docs/runbooks/aws-deployment.md)。 |
 
 - **DB 選定方針（利用実態ベース）**:
   - **超低稼働・断続利用（既定）** → **Aurora Serverless v2 + Data API**。未使用時 0 ACU まで自動休止し、復帰は初回リクエストで数秒（業務用途で許容）。VPC/NAT 不要でコスト・構成ともに最小。
