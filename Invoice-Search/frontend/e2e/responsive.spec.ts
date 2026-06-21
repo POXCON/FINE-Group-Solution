@@ -113,7 +113,8 @@ test.describe("UI/UX スクリーンショット（Mobile）", () => {
     "../../docs/migration/uiux-after",
   );
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!isMobile, "モバイル幅のスクリーンショットのみ撮影する");
     await mockInvoiceApi(page, MOCK_INVOICE_RESULTS);
     if (!fs.existsSync(screenshotDir)) {
       fs.mkdirSync(screenshotDir, { recursive: true });

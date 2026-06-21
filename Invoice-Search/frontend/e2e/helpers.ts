@@ -56,6 +56,22 @@ export async function loginWithMock(
   }
 }
 
+/**
+ * モバイル幅ではサイドナビが drawer 内に隠れているため、
+ * ナビゲーション操作の前にハンバーガーで drawer を開く。
+ * デスクトップ（lg:drawer-open）では何もしない。
+ */
+export async function openSidebarIfMobile(
+  page: Page,
+  isMobile: boolean | undefined,
+): Promise<void> {
+  if (!isMobile) {
+    return;
+  }
+  await page.locator("label[for='sidebar-toggle']").first().click();
+  await page.waitForTimeout(300);
+}
+
 /** テスト用インボイス結果のフィクスチャ。 */
 export const MOCK_INVOICE_RESULTS: InvoiceApiResult[] = [
   {

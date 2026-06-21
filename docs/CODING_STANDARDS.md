@@ -23,6 +23,7 @@
 - **TypeScript strict**。`any` 禁止（やむを得ない場合は理由をコメント）。
 - 関数コンポーネント + Hooks。副作用は `useEffect` に限定し依存配列を正確に。
 - UI は **daisyUI コンポーネント + Tailwind ユーティリティ**。独自 CSS は最小限。
+- **UI 規格は全システム共通の [デザインシステム（FINE UI）](DESIGN_SYSTEM.md) に準拠**（色・形・レイアウト・コンポーネント）。生のカラーコード直書きは禁止し、トークン（`primary` / `base-200` 等）を介す。
 - データ取得は TanStack Query 等を優先。fetch 直書きの散在を避ける。
 - Lint/Format: **ESLint + Prettier**。`npm run lint` をグリーンに。
 - ディレクトリ: `src/features/<feature>/`（components / hooks / api / types）で機能単位に整理。

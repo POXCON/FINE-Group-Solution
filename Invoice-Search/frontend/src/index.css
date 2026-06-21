@@ -2,8 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
-  height: 100%;
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family:
+      "Inter", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "palt" 1;
+    letter-spacing: 0.01em;
+  }
+
+  /* 数字・コード（インボイス番号など）は等幅数字で桁を揃える */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  /* 控えめなスクロールバー */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--bc) / 0.2) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--bc) / 0.2);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::selection {
+    background-color: hsl(var(--p) / 0.18);
+  }
+}
+
+@layer components {
+  /* ステータスを示すソフトバッジ（ネオンを避けた業務系トーン） */
+  .badge-soft-success {
+    @apply border border-success/25 bg-success/10 text-success;
+  }
+  .badge-soft-error {
+    @apply border border-error/25 bg-error/10 text-error;
+  }
+  .badge-soft-neutral {
+    @apply border border-base-content/15 bg-base-content/5 text-base-content/70;
+  }
 }

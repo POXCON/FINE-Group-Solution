@@ -2,6 +2,12 @@ export const en = {
   translation: {
     appName: "Invoice Search App",
 
+    brand: {
+      suite: "FINE Group Solution",
+      menu: "Menu",
+      signedIn: "Signed in",
+    },
+
     common: {
       search: "Search",
       reset: "Reset",
@@ -51,11 +57,15 @@ export const en = {
       },
       registered: "Registered",
       notRegistered: "Not Registered",
+      unknown: "Unknown",
       emptyState: "No results yet. Search for invoice numbers above.",
+      resultsTitle: "Search Results",
+      resultCount: "{{count}} records",
     },
 
     consistencyCheck: {
       title: "Consistency Check",
+      uploadCardTitle: "Upload CSV",
       uploadFile: "Upload CSV file",
       uploadHint: "Drag & drop a CSV file here, or click to select",
       selectedFile: "Selected file:",
@@ -73,7 +83,10 @@ export const en = {
     },
 
     auth: {
-      loginTitle: "Sign in to Invoice Search App",
+      loginTitle: "Sign in",
+      loginSubtitle: "Enter your store account to continue.",
+      heroLead:
+        "Look up qualified-invoice issuer registration numbers and verify them against your records — fast, accurate, and audit-ready.",
       email: "Email address",
       password: "Password",
       signIn: "Sign in",

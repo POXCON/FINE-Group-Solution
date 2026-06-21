@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { loginWithMock, mockInvoiceApi, MOCK_INVOICE_RESULTS, MOCK_CONSISTENCY_CSV } from "./helpers";
+import { loginWithMock, mockInvoiceApi, openSidebarIfMobile, MOCK_INVOICE_RESULTS, MOCK_CONSISTENCY_CSV } from "./helpers";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,11 +17,12 @@ const __dirname = path.dirname(__filename);
  */
 
 test.describe("Consistency Check flow", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, isMobile }) => {
     await mockInvoiceApi(page, MOCK_INVOICE_RESULTS);
     await loginWithMock(page);
 
-    // 整合性チェックページへ移動
+    // 整合性チェックページへ移動（モバイルは drawer を開いてから）
+    await openSidebarIfMobile(page, isMobile);
     await page.getByRole("link", { name: /整合性チェック/i }).click();
     await page.waitForURL(/\/consistency-check/);
   });
@@ -111,9 +112,11 @@ test.describe("UI/UX スクリーンショット（整合性チェック）", ()
     "../../docs/migration/uiux-after",
   );
 
-  test("consistency-check 結果表示のスクリーンショット", async ({ page }) => {
+  test("consistency-check 結果表示のスクリーンショット", async ({ page, isMobile }) => {
+    test.skip(!!isMobile, "デスクトップ幅のスクリーンショットのみ撮影する");
     await mockInvoiceApi(page, MOCK_INVOICE_RESULTS);
     await loginWithMock(page);
+    await openSidebarIfMobile(page, isMobile);
     await page.getByRole("link", { name: /整合性チェック/i }).click();
     await page.waitForURL(/\/consistency-check/);
 
