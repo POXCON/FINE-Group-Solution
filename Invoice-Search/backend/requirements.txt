@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+azure.identity
+requests
+opencensus-ext-azure
+pytz
