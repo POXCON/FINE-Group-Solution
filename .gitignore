@@ -1,7 +1,8 @@
 # --- FINE Group Solution (monorepo) ---
 
-# 既存: Invoice-Search の仕様ドキュメント（バイナリ）は追跡しない
-/Invoice-Search/docs
+# 既存: Invoice-Search の仕様ドキュメント（バイナリのみ）は追跡しない（.md/.puml は追跡）
+/Invoice-Search/docs/*.pdf
+/Invoice-Search/docs/*.pptx
 
 # Node / Frontend
 node_modules/
@@ -25,6 +26,13 @@ env/
 htmlcov/
 .coverage
 coverage.xml
+coverage/
+
+# tsc が config.ts から生成する成果物（ソースは .ts）
+/Invoice-Search/frontend/vite.config.js
+/Invoice-Search/frontend/vite.config.d.ts
+/Invoice-Search/frontend/tailwind.config.js
+/Invoice-Search/frontend/tailwind.config.d.ts
 
 # Env / Secrets
 .env
@@ -37,6 +45,11 @@ coverage.xml
 *.tfstate
 *.tfstate.*
 cdk.out/
+
+# Playwright E2E（生成物・レポート・ブラウザキャッシュ）
+playwright-report/
+test-results/
+.playwright/
 
 # Editor / OS
 .vscode/

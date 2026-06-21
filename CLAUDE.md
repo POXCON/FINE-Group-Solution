@@ -49,6 +49,7 @@ FINE-Group-Solution/            ← リポジトリルート（= 01. FINE-Grp）
 - **Vite（最新）+ React（最新, TypeScript）+ daisyUI（最新）+ TailwindCSS（最新）**
 - 状態管理・データ取得は原則 TanStack Query + 軽量ストア。重い独自実装より実績あるライブラリを優先。
 - UI は daisyUI コンポーネント + Tailwind ユーティリティで構築（独自 CSS は最小限）。
+- **UI は全システム共通の [デザインシステム（FINE UI）](docs/DESIGN_SYSTEM.md) に必ず準拠**（色・形・タイポ・レイアウト・コンポーネントを統一）。新システムは同書「適用手順」をコピーして開始する。
 
 ### バックエンド
 - **Python 3.12.10 + FastAPI**
