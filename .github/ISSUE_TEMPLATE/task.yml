@@ -1,0 +1,36 @@
+name: "🛠 タスク (Task / Chore)"
+description: リファクタ・調査・運用・ドキュメント等の作業
+title: "chore: "
+labels: ["type:task"]
+body:
+  - type: dropdown
+    id: system
+    attributes:
+      label: 対象システム
+      options:
+        - invoice-search
+        - (新規システム)
+        - 共通 / モノレポ全体
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 作業内容
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 完了条件
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options: ["high", "medium", "low"]
+    validations:
+      required: true

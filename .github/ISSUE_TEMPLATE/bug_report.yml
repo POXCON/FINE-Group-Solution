@@ -1,0 +1,48 @@
+name: "🐛 バグ報告 (Bug)"
+description: 不具合の報告
+title: "fix: "
+labels: ["type:bug"]
+body:
+  - type: dropdown
+    id: system
+    attributes:
+      label: 対象システム
+      options:
+        - invoice-search
+        - (新規システム)
+        - 共通 / モノレポ全体
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 現象 (実際の挙動)
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現手順
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 環境 (ブラウザ / OS / ブランチ / コミット)
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重大度
+      options: ["critical", "high", "medium", "low"]
+    validations:
+      required: true

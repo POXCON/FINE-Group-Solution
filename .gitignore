@@ -1,0 +1,45 @@
+# --- FINE Group Solution (monorepo) ---
+
+# 既存: Invoice-Search の仕様ドキュメント（バイナリ）は追跡しない
+/Invoice-Search/docs
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.vite/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Env / Secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# IaC / Cloud
+.terraform/
+*.tfstate
+*.tfstate.*
+cdk.out/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

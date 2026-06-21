@@ -1,0 +1,67 @@
+name: CI
+
+# モノレポ共通 CI。各システムの frontend/ backend/ を自動検出して品質ゲートを実行する。
+# 構成が固まったらシステム単位の path フィルタ / matrix に最適化すること。
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "develop-*"
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  frontend:
+    name: Frontend (lint / test / build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run checks for each frontend
+        shell: bash
+        run: |
+          shopt -s nullglob
+          found=0
+          for pkg in */frontend/package.json; do
+            dir=$(dirname "$pkg")
+            echo "::group::$dir"
+            ( cd "$dir" && npm ci && npm run lint && npm run test --if-present && npm run build )
+            echo "::endgroup::"
+            found=1
+          done
+          [ "$found" = 0 ] && echo "No frontend project found — skipping." || true
+
+  backend:
+    name: Backend (ruff / black / mypy / pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.10"
+      - name: Run checks for each backend
+        shell: bash
+        run: |
+          shopt -s nullglob
+          found=0
+          for req in */backend/requirements.txt; do
+            dir=$(dirname "$req")
+            echo "::group::$dir"
+            ( cd "$dir" \
+              && python -m pip install --upgrade pip \
+              && pip install -r requirements.txt \
+              && pip install ruff black mypy pytest pytest-cov \
+              && ruff check . \
+              && black --check . \
+              && (mypy . || true) \
+              && pytest --cov --cov-report=term-missing )
+            echo "::endgroup::"
+            found=1
+          done
+          [ "$found" = 0 ] && echo "No backend project found — skipping." || true
