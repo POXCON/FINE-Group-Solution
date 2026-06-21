@@ -67,16 +67,17 @@ FINE-Group-Solution/            ← リポジトリルート（= 01. FINE-Grp）
 | 認証 | **Amazon Cognito** | 50,000 MAU まで無料枠。現規模では実質無償。 |
 | フロント配信 | **S3 + CloudFront**（静的ホスティング） | サーバ常時起動不要。ほぼ無料枠内。 |
 | バックエンド実行 | **AWS Lambda + API Gateway**（FastAPI を Mangum で接続） | ゼロスケール・従量課金。低〜スパイク負荷で最安。 |
-| DB | **Amazon RDS for PostgreSQL `db.t4g.micro`（共有1台・システム別スキーマ）** | 月額約 $12–15。システム毎にDBを立てずスキーマ分離でコスト抑制。 |
+| DB | **Aurora Serverless v2 + Data API（アイドル時 0 ACU で自動休止）** | 当グループの想定利用（1 店舗あたり 1 日数名・同時アクセスほぼ無し）では**大半が休止状態**となり、課金はストレージ中心で最安。Data API 利用で **VPC/NAT 不要**。 |
 | ファイル | **S3** | 従量・無料枠あり。 |
 | IaC | **AWS CDK もしくは Terraform** | 構成はコード管理。 |
 
-- **コスト注意（重要）**: Lambda から VPC 内 RDS へ接続する際の **NAT Gateway は月額約 $32 + 通信費** が発生しやすい。回避策として
-  (a) **Aurora Serverless v2 + Data API**（HTTPS 接続・VPC/NAT 不要、アイドル時 0 ACU まで縮退）、
-  (b) Lambda を VPC 内に置き **VPC エンドポイント**経由（NAT 無し）、(c) RDS Proxy のいずれかを採用する。
-- **負荷が読めない/スパイクが大きい場合は Aurora Serverless v2（Data API 併用）**、**定常的な低負荷なら RDS `t4g.micro`** を選択。
+- **DB 選定方針（利用実態ベース）**:
+  - **超低稼働・断続利用（既定）** → **Aurora Serverless v2 + Data API**。未使用時 0 ACU まで自動休止し、復帰は初回リクエストで数秒（業務用途で許容）。VPC/NAT 不要でコスト・構成ともに最小。
+  - **定常的に一定負荷がある場合** → **RDS for PostgreSQL `db.t4g.micro`**（月額約 $12–15・共有1台/システム別スキーマ）。
+- **コスト注意（重要）**: Lambda から **VPC 内 RDS** へ接続する場合の **NAT Gateway は月額約 $32 + 通信費** が発生しやすい。Aurora Serverless v2 の **Data API（HTTPS 接続）**採用で原則回避。やむを得ず VPC RDS を使う場合は **VPC エンドポイント**（NAT 無し）か RDS Proxy を用いる。
+- 認証は **Cognito**（無料枠内）。店舗ごとのユーザー払い出しもこれで標準化。
 - 定常負荷が増えコールドスタートが問題化したら **ECS Fargate** へ移行（判断は PM）。
-- 想定ベースライン: 低トラフィック時 **概ね月 $15–30**（大半は RDS）。Cognito/Lambda/S3 は当初ほぼ無料枠内。
+- 想定ベースライン: 現状の利用規模なら **概ね月 $5–15**（休止活用時はさらに低減）。Cognito/Lambda/S3 は当初ほぼ無料枠内。
 - ※ インフラ／認証方式の確定はシステム単位で PM 承認のうえ決定。判断に迷う場合はオーナーへエスカレーション。
 
 > 既存 `Invoice-Search` は旧スタック（React18 + antd + MUI / Azure）。**新標準への段階移行対象**（`docs/DEVELOPMENT_WORKFLOW.md` 参照）。
