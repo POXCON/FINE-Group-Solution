@@ -1,7 +1,8 @@
 # --- FINE Group Solution (monorepo) ---
 
-# 既存: Invoice-Search の仕様ドキュメント（バイナリ）は追跡しない
-/Invoice-Search/docs
+# 既存: Invoice-Search の仕様ドキュメント（バイナリのみ）は追跡しない（.md/.puml は追跡）
+/Invoice-Search/docs/*.pdf
+/Invoice-Search/docs/*.pptx
 
 # Node / Frontend
 node_modules/
