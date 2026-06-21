@@ -6,7 +6,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist", "coverage", "node_modules"] },
+  { ignores: ["dist", "coverage", "node_modules", "playwright-report", "test-results"] },
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
@@ -20,6 +20,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2020,
+        ...globals.node,
       },
     },
     plugins: {
@@ -38,6 +39,13 @@ export default [
       "@typescript-eslint/no-explicit-any": "error",
       "no-console": ["error", { allow: ["warn", "error"] }],
       "no-undef": "off",
+    },
+  },
+  // E2E テスト（Playwright）— react-refresh ルールを無効化
+  {
+    files: ["e2e/**/*.{ts,tsx}"],
+    rules: {
+      "react-refresh/only-export-components": "off",
     },
   },
 ];

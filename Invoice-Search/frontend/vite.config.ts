@@ -4,6 +4,10 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  // amazon-cognito-identity-js が参照する Node.js グローバル `global` をポリフィル
+  define: {
+    global: "globalThis",
+  },
   resolve: {
     alias: {
       "@": "/src",
@@ -14,6 +18,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     css: true,
+    exclude: ["node_modules", "dist", "e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
