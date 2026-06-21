@@ -46,6 +46,11 @@ coverage/
 *.tfstate.*
 cdk.out/
 
+# Playwright E2E（生成物・レポート・ブラウザキャッシュ）
+playwright-report/
+test-results/
+.playwright/
+
 # Editor / OS
 .vscode/
 .idea/
