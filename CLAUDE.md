@@ -58,11 +58,25 @@ FINE-Group-Solution/            ← リポジトリルート（= 01. FINE-Grp）
 ### ミドルエンド（任意）
 - フロントの要求に合わせた集約・整形が必要な場合のみ **BFF（Backend-for-Frontend）** を `middleend/` に設置。
 
-### インフラ / DB（**AWS 標準へ移行中**）
-- **ホスティング: AWS**（既存 Azure 資産は段階的に AWS へ移行）。
-- **DB: Amazon RDS for PostgreSQL**（小規模は Aurora Serverless v2 を検討）。
-- **認証: Amazon Cognito**。**ファイル: S3**。**実行基盤: ECS Fargate もしくは Lambda**。
-- IaC は **Terraform もしくは AWS CDK** を標準とし、構成はコード管理する。
+### インフラ / DB（**AWS 標準へ移行中・低コスト最優先**）
+
+リージョンは **ap-northeast-1（東京）** を標準とする。コスト最小化を基本方針とし、以下を参照アーキテクチャとする。
+
+| レイヤ | 標準（コスト最適） | 理由 / 備考 |
+|--------|--------------------|-------------|
+| 認証 | **Amazon Cognito** | 50,000 MAU まで無料枠。現規模では実質無償。 |
+| フロント配信 | **S3 + CloudFront**（静的ホスティング） | サーバ常時起動不要。ほぼ無料枠内。 |
+| バックエンド実行 | **AWS Lambda + API Gateway**（FastAPI を Mangum で接続） | ゼロスケール・従量課金。低〜スパイク負荷で最安。 |
+| DB | **Amazon RDS for PostgreSQL `db.t4g.micro`（共有1台・システム別スキーマ）** | 月額約 $12–15。システム毎にDBを立てずスキーマ分離でコスト抑制。 |
+| ファイル | **S3** | 従量・無料枠あり。 |
+| IaC | **AWS CDK もしくは Terraform** | 構成はコード管理。 |
+
+- **コスト注意（重要）**: Lambda から VPC 内 RDS へ接続する際の **NAT Gateway は月額約 $32 + 通信費** が発生しやすい。回避策として
+  (a) **Aurora Serverless v2 + Data API**（HTTPS 接続・VPC/NAT 不要、アイドル時 0 ACU まで縮退）、
+  (b) Lambda を VPC 内に置き **VPC エンドポイント**経由（NAT 無し）、(c) RDS Proxy のいずれかを採用する。
+- **負荷が読めない/スパイクが大きい場合は Aurora Serverless v2（Data API 併用）**、**定常的な低負荷なら RDS `t4g.micro`** を選択。
+- 定常負荷が増えコールドスタートが問題化したら **ECS Fargate** へ移行（判断は PM）。
+- 想定ベースライン: 低トラフィック時 **概ね月 $15–30**（大半は RDS）。Cognito/Lambda/S3 は当初ほぼ無料枠内。
 - ※ インフラ／認証方式の確定はシステム単位で PM 承認のうえ決定。判断に迷う場合はオーナーへエスカレーション。
 
 > 既存 `Invoice-Search` は旧スタック（React18 + antd + MUI / Azure）。**新標準への段階移行対象**（`docs/DEVELOPMENT_WORKFLOW.md` 参照）。
