@@ -4,6 +4,12 @@ export const ja: { translation: TranslationResource } = {
   translation: {
     appName: "インボイス検索アプリ",
 
+    brand: {
+      suite: "FINE Group Solution",
+      menu: "メニュー",
+      signedIn: "サインイン中",
+    },
+
     common: {
       search: "検索",
       reset: "リセット",
@@ -53,11 +59,15 @@ export const ja: { translation: TranslationResource } = {
       },
       registered: "登録済み",
       notRegistered: "未登録",
+      unknown: "不明",
       emptyState: "検索結果がありません。上部でインボイス番号を検索してください。",
+      resultsTitle: "検索結果",
+      resultCount: "{{count}}件",
     },
 
     consistencyCheck: {
       title: "整合性チェック",
+      uploadCardTitle: "CSVアップロード",
       uploadFile: "CSVファイルをアップロード",
       uploadHint: "ここにCSVファイルをドラッグ&ドロップ、またはクリックして選択",
       selectedFile: "選択されたファイル：",
@@ -75,7 +85,10 @@ export const ja: { translation: TranslationResource } = {
     },
 
     auth: {
-      loginTitle: "インボイス検索アプリにログイン",
+      loginTitle: "ログイン",
+      loginSubtitle: "店舗アカウントでサインインしてください。",
+      heroLead:
+        "適格請求書発行事業者の登録番号を素早く照会し、自社データとの整合性を確認できます。正確で監査にも対応した業務ツールです。",
       email: "メールアドレス",
       password: "パスワード",
       signIn: "ログイン",

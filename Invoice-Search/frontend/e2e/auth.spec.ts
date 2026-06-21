@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { loginWithMock } from "./helpers";
+import { loginWithMock, openSidebarIfMobile } from "./helpers";
 
 /**
  * 認証フロー E2E テスト
@@ -67,10 +67,12 @@ test.describe("Authentication flow", () => {
     ).toBeVisible();
   });
 
-  test("ログアウトすると /login にリダイレクトされる", async ({ page }) => {
+  test("ログアウトすると /login にリダイレクトされる", async ({ page, isMobile }) => {
     await loginWithMock(page);
     await expect(page).toHaveURL(/\/search/);
 
+    // モバイルはサイドバー内のログアウトを開いてからクリック
+    await openSidebarIfMobile(page, isMobile);
     // ログアウトボタン（i18n により日英どちらでも可）
     await page.getByRole("button", { name: /Log out|ログアウト/i }).click();
     await expect(page).toHaveURL(/\/login/);

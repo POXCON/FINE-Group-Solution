@@ -45,95 +45,229 @@ export function ConsistencyCheckPage(): React.JSX.Element {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <h1 className="text-2xl font-bold">{t("consistencyCheck.title")}</h1>
+    <div className="flex flex-col gap-5">
+      {/* アップロードカード */}
+      <section className="rounded-box border border-base-300 bg-base-100 p-5 shadow-card md:p-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-base-content">
+            {t("consistencyCheck.uploadCardTitle")}
+          </h2>
+          <p className="mt-1 text-sm text-base-content/60">
+            {t("consistencyCheck.uploadHint")}
+          </p>
+        </div>
 
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
-          <div
-            className="border-2 border-dashed border-base-300 rounded-lg p-8 text-center cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
-            role="button"
-            tabIndex={0}
-          >
-            <p className="text-base-content/60">{t("consistencyCheck.uploadHint")}</p>
-            {selectedFile && (
-              <p className="mt-2 font-medium">
-                {t("consistencyCheck.selectedFile")} {selectedFile.name}
-              </p>
-            )}
+        <div
+          className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-box border-2 border-dashed border-base-300 bg-base-200/40 px-6 py-10 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+          onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
+          }}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-base-100 text-base-content/40 shadow-sm transition-colors group-hover:text-primary">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+              />
+            </svg>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-
-          {fileError && (
-            <div role="alert" className="alert alert-error">
-              <span>{fileError}</span>
-            </div>
+          <p className="text-sm text-base-content/60">
+            {t("consistencyCheck.uploadHint")}
+          </p>
+          {selectedFile && (
+            <p className="inline-flex items-center gap-2 rounded-full border border-base-300 bg-base-100 px-3 py-1 text-sm font-medium text-base-content">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              {t("consistencyCheck.selectedFile")} {selectedFile.name}
+            </p>
           )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={handleFileChange}
+        />
 
+        {fileError && (
+          <div role="alert" className="alert alert-error mt-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              className="h-5 w-5 shrink-0 stroke-current"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+              />
+            </svg>
+            <span>{fileError}</span>
+          </div>
+        )}
+
+        <div className="mt-4 flex justify-end">
           <button
             type="button"
-            className="btn btn-primary self-start"
-            onClick={() => { void handleCheck(); }}
+            className="btn btn-primary gap-2"
+            onClick={() => {
+              void handleCheck();
+            }}
             disabled={checkMutation.isPending}
           >
+            {checkMutation.isPending ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+                className="h-4 w-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+            )}
             {checkMutation.isPending ? t("common.loading") : t("consistencyCheck.check")}
           </button>
         </div>
-      </div>
+      </section>
 
       {rows.length === 0 && !checkMutation.isPending && (
-        <div className="alert" role="status">
-          <span>{t("consistencyCheck.emptyState")}</span>
+        <div className="rounded-box border border-base-300 bg-base-100 shadow-card">
+          <div
+            className="flex flex-col items-center gap-3 px-6 py-16 text-center"
+            role="status"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-base-200 text-base-content/40">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+            </div>
+            <p className="max-w-xs text-sm text-base-content/60">
+              {t("consistencyCheck.emptyState")}
+            </p>
+          </div>
         </div>
       )}
 
       {rows.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>{t("consistencyCheck.title")}</th>
-                <th>{t("search.column.invoiceNumber")}</th>
-                <th>{t("search.column.companyName")}</th>
-                <th>{t("search.column.address")}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className={row.isConsistent ? "" : "text-error"}>
-                  <td>
-                    <span className={`badge ${row.isConsistent ? "badge-success" : "badge-error"}`}>
-                      {row.isConsistent ? t("consistencyCheck.consistent") : "NG"}
-                    </span>
-                  </td>
-                  <td>{row.invoiceNumber}</td>
-                  <td>{row.companyName}</td>
-                  <td>{row.address}</td>
-                  <td>
-                    {!row.isConsistent && row.apiCompanyName && (
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleMerge(row.id)}
-                      >
-                        {t("consistencyCheck.merge")}
-                      </button>
-                    )}
-                  </td>
+        <section className="overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-card">
+          <header className="flex items-center justify-between gap-3 border-b border-base-300 px-5 py-3.5">
+            <h2 className="text-sm font-semibold text-base-content">
+              {t("search.resultsTitle")}
+            </h2>
+            <span className="badge badge-ghost badge-sm tabular">
+              {t("search.resultCount", { count: rows.length })}
+            </span>
+          </header>
+
+          <div className="overflow-x-auto">
+            <table className="table table-zebra">
+              <thead>
+                <tr>
+                  <th className="bg-base-200/70 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                    {t("consistencyCheck.title")}
+                  </th>
+                  <th className="bg-base-200/70 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                    {t("search.column.invoiceNumber")}
+                  </th>
+                  <th className="bg-base-200/70 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                    {t("search.column.companyName")}
+                  </th>
+                  <th className="bg-base-200/70 text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                    {t("search.column.address")}
+                  </th>
+                  <th className="bg-base-200/70 text-right text-xs font-semibold uppercase tracking-wide text-base-content/60" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id} className="hover">
+                    <td>
+                      <span
+                        className={`badge badge-sm gap-1.5 font-medium badge-outline ${
+                          row.isConsistent ? "badge-success" : "badge-error"
+                        }`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            row.isConsistent ? "bg-success" : "bg-error"
+                          }`}
+                        />
+                        {row.isConsistent ? t("consistencyCheck.consistent") : "NG"}
+                      </span>
+                    </td>
+                    <td className="tabular font-medium">{row.invoiceNumber}</td>
+                    <td className={row.isConsistent ? "" : "text-error"}>
+                      {row.companyName}
+                    </td>
+                    <td
+                      className={row.isConsistent ? "text-base-content/80" : "text-error"}
+                    >
+                      {row.address}
+                    </td>
+                    <td className="text-right">
+                      {!row.isConsistent && row.apiCompanyName && (
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-outline btn-primary gap-1"
+                          onClick={() => handleMerge(row.id)}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.8}
+                            stroke="currentColor"
+                            className="h-3.5 w-3.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                            />
+                          </svg>
+                          {t("consistencyCheck.merge")}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { loginWithMock, mockInvoiceApi, mockInvoiceApiError, MOCK_INVOICE_RESULTS } from "./helpers";
+import { loginWithMock, mockInvoiceApi, mockInvoiceApiError, openSidebarIfMobile, MOCK_INVOICE_RESULTS } from "./helpers";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -185,7 +185,8 @@ test.describe("UI/UX スクリーンショット（Desktop）", () => {
     "../../docs/migration/uiux-after",
   );
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!!isMobile, "デスクトップ幅のスクリーンショットのみ撮影する");
     await mockInvoiceApi(page, MOCK_INVOICE_RESULTS);
     if (!fs.existsSync(screenshotDir)) {
       fs.mkdirSync(screenshotDir, { recursive: true });
@@ -224,8 +225,10 @@ test.describe("UI/UX スクリーンショット（Desktop）", () => {
 
   test("consistency-check ページ（空状態）のスクリーンショット", async ({
     page,
+    isMobile,
   }) => {
     await loginWithMock(page);
+    await openSidebarIfMobile(page, isMobile);
     await page.getByRole("link", { name: /整合性チェック/i }).click();
     await page.waitForURL(/\/consistency-check/);
     await page.waitForLoadState("networkidle");
