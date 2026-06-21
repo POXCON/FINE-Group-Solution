@@ -3,6 +3,7 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import globals from "globals";
 
 export default [
   { ignores: ["dist", "coverage", "node_modules"] },
@@ -17,17 +18,8 @@ export default [
         ecmaFeatures: { jsx: true },
       },
       globals: {
-        window: "readonly",
-        document: "readonly",
-        localStorage: "readonly",
-        fetch: "readonly",
-        FileReader: "readonly",
-        File: "readonly",
-        Blob: "readonly",
-        URL: "readonly",
-        console: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
+        ...globals.browser,
+        ...globals.es2020,
       },
     },
     plugins: {
@@ -45,6 +37,7 @@ export default [
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "error",
       "no-console": ["error", { allow: ["warn", "error"] }],
+      "no-undef": "off",
     },
   },
 ];
