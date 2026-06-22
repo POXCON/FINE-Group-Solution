@@ -49,7 +49,11 @@ aws sts get-caller-identity --profile fine-admin   # Account 等が返れば OK
 
 ## 2. IaC プロジェクト（`infra/`）について
 
-CDK のコード一式（`infra/`）は **P3（#5）で作成**します。完成後の構成は次の想定です。
+> **Invoice-Search の実装済みインフラ**: `Invoice-Search/infra/`（CDK）。**この構成は DB を使いません**（アプリは国税庁APIを呼ぶのみで永続化なし）。
+> 具体的なデプロイ手順は **[`Invoice-Search/infra/README.md`](../../Invoice-Search/infra/README.md)** を参照（本書はリポジトリ共通の考え方／コスト管理）。
+> スタック: `InvoiceSearchAuth`（Cognito）/ `InvoiceSearchApi`（Lambda+API GW）/ `InvoiceSearchWeb`（S3+CloudFront）。
+
+新システムで DB が必要な場合の一般構成は次の想定です（Invoice-Search では未使用）。
 
 ```
 infra/                         # CDK プロジェクト（リポジトリ直下 or 専用）
