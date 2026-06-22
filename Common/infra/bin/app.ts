@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
 import { UnifiedWebStack } from "../lib/web-stack";
+import { ResourceGroupStack } from "../lib/resource-group-stack";
 
 /**
  * FINE 統合 CloudFront インフラ（同一オリジン配信 / Lambda 無し）
@@ -16,6 +17,12 @@ import { UnifiedWebStack } from "../lib/web-stack";
  */
 const app = new cdk.App();
 
+// FINE Group Solution 統一タグ（コンソール横断一覧・コスト按分用）。
+cdk.Tags.of(app).add("Project", "FINE-Group-Solution");
+cdk.Tags.of(app).add("Environment", "prod");
+cdk.Tags.of(app).add("ManagedBy", "CDK");
+cdk.Tags.of(app).add("System", "common");
+
 const env: cdk.Environment = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION ?? "ap-northeast-1",
@@ -30,5 +37,8 @@ new UnifiedWebStack(app, "FineUnifiedWeb", {
   env,
   apiDomain,
 });
+
+// タグベースの AWS Resource Group（Project=FINE-Group-Solution で全リソースを横断）。
+new ResourceGroupStack(app, "FineResourceGroup", { env });
 
 app.synth();
