@@ -56,15 +56,19 @@ describe("AppLayout", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the back-to-portal link pointing to /", () => {
+  it("renders the back-to-portal link in the sidebar pointing to /", () => {
     renderLayout(makeAuth(adminUser), makeTheme());
     const link = screen.getByRole("link", { name: "common.backToPortal" });
     expect(link.getAttribute("href")).toBe("/");
   });
 
-  it("shows the logout and theme controls in the header (always visible)", () => {
+  it("does not render a logout control in the header (logout lives in the portal)", () => {
     renderLayout(makeAuth(adminUser), makeTheme({ theme: "light" }));
-    expect(screen.getByRole("button", { name: "common.logout" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "common.logout" })).toBeNull();
+  });
+
+  it("shows the theme control in the header", () => {
+    renderLayout(makeAuth(adminUser), makeTheme({ theme: "light" }));
     // light theme → label is the dark-switch action
     expect(screen.getByRole("button", { name: "common.dark" })).toBeDefined();
   });
@@ -72,13 +76,6 @@ describe("AppLayout", () => {
   it("shows the light-switch label when the theme is dark", () => {
     renderLayout(makeAuth(adminUser), makeTheme({ theme: "dark" }));
     expect(screen.getByRole("button", { name: "common.light" })).toBeDefined();
-  });
-
-  it("invokes logout when the logout button is clicked", () => {
-    const logout = vi.fn();
-    renderLayout(makeAuth(adminUser, { logout }), makeTheme());
-    fireEvent.click(screen.getByRole("button", { name: "common.logout" }));
-    expect(logout).toHaveBeenCalledTimes(1);
   });
 
   it("invokes toggleTheme when the theme button is clicked", () => {
