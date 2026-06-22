@@ -7,7 +7,7 @@ vi.mock("react-i18next", () => ({
 }));
 
 vi.mock("@/features/auth/hooks/useAuthContext", () => ({
-  useAuth: () => ({ user: { email: "test@example.com" } }),
+  useAuth: () => ({ user: { email: "test@example.com", groups: ["fine-admin"] } }),
 }));
 
 vi.mock("../hooks/useConsistencyCheck", () => ({

@@ -57,11 +57,28 @@ export async function loginWithMock(
     ([key, value]) => {
       window.sessionStorage.setItem(key, value);
     },
-    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email })] as const,
+    // groups に fine-admin を含め、ロールガード（管理者専用）を通過させる。
+    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email, groups: ["fine-admin"] })] as const,
   );
   // baseURL は .../invoice-search/ なので、先頭スラッシュなしで base 相対解決させる。
   await page.goto(SEARCH_PATH);
   await page.waitForURL(/\/invoice-search\/search/, { timeout: 15000 });
+}
+
+/**
+ * 非管理者（fine-admin 非所属の店舗ユーザー）のモックセッションを投入する。
+ * ロールガードにより、保護ルートへ入れずポータル（`/`）へリダイレクトされる想定。
+ */
+export async function seedNonAdminSession(
+  page: Page,
+  email = "staff@example.com",
+): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.sessionStorage.setItem(key, value);
+    },
+    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email, groups: ["store-staff"] })] as const,
+  );
 }
 
 /**

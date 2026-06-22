@@ -5,6 +5,7 @@ import {
 } from "amazon-cognito-identity-js";
 import type { AuthClient, AuthUser, LoginCredentials } from "../types";
 import { clearPreference, readPreference, resolveStorage } from "../lib/authStorage";
+import { normalizeGroups } from "../lib/roles";
 
 interface CognitoConfig {
   userPoolId: string;
@@ -14,6 +15,7 @@ interface CognitoConfig {
 interface IdTokenPayload {
   email?: string;
   name?: string;
+  "cognito:groups"?: unknown;
 }
 
 type CognitoSession = {
@@ -44,7 +46,11 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
       cognitoUser.authenticateUser(authDetails, {
         onSuccess: (session: CognitoSession) => {
           const payload = session.getIdToken().decodePayload();
-          resolve({ email: payload.email ?? email, name: payload.name });
+          resolve({
+            email: payload.email ?? email,
+            name: payload.name,
+            groups: normalizeGroups(payload["cognito:groups"]),
+          });
         },
         onFailure: (error: unknown) => reject(error),
       });
@@ -78,6 +84,7 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
         resolve({
           email: payload.email ?? cognitoUser.getUsername(),
           name: payload.name,
+          groups: normalizeGroups(payload["cognito:groups"]),
         });
       });
     });

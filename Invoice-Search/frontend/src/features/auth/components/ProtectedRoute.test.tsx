@@ -70,15 +70,48 @@ describe("ProtectedRoute", () => {
     expect(window.location.href).toBe(originalHref);
   });
 
-  it("renders protected content when user is authenticated", () => {
-    const auth = makeAuthContext({ user: { email: "user@test.com" }, isInitializing: false });
+  it("renders protected content when user is an authenticated fine-admin", () => {
+    const auth = makeAuthContext({
+      user: { email: "admin@test.com", groups: ["fine-admin"] },
+      isInitializing: false,
+    });
     renderWithRoute(auth);
     expect(screen.getByText("Protected Content")).toBeDefined();
   });
 
-  it("does not redirect when user is authenticated", () => {
-    const auth = makeAuthContext({ user: { email: "user@test.com" }, isInitializing: false });
+  it("does not redirect when user is an authenticated fine-admin", () => {
+    const auth = makeAuthContext({
+      user: { email: "admin@test.com", groups: ["fine-admin"] },
+      isInitializing: false,
+    });
     renderWithRoute(auth);
     expect(window.location.href).toBe(originalHref);
+  });
+
+  it("redirects to the portal (/) when authenticated but not a fine-admin", () => {
+    const auth = makeAuthContext({
+      user: { email: "staff@test.com", groups: ["store-staff"] },
+      isInitializing: false,
+    });
+    renderWithRoute(auth);
+    expect(window.location.href).toBe("/");
+  });
+
+  it("redirects to the portal (/) when authenticated user has empty groups", () => {
+    const auth = makeAuthContext({
+      user: { email: "nobody@test.com", groups: [] },
+      isInitializing: false,
+    });
+    renderWithRoute(auth);
+    expect(window.location.href).toBe("/");
+  });
+
+  it("does not render protected content for a non-admin user", () => {
+    const auth = makeAuthContext({
+      user: { email: "staff@test.com", groups: ["store-staff"] },
+      isInitializing: false,
+    });
+    renderWithRoute(auth);
+    expect(screen.queryByText("Protected Content")).toBeNull();
   });
 });
