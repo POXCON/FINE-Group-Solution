@@ -1,0 +1,26 @@
+{
+  "name": "common-infra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FINE 統合 CloudFront インフラ（ポータル/Invoice-Search/API 同一オリジン配信・AWS CDK / TypeScript）",
+  "bin": {
+    "infra": "bin/app.ts"
+  },
+  "scripts": {
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "aws-cdk": "2.160.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.5.4"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.160.0",
+    "constructs": "^10.3.0"
+  }
+}
