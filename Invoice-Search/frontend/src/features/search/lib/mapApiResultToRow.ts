@@ -4,9 +4,9 @@ export function mapApiResultToRow(result: InvoiceApiResult, id: string): Invoice
   return {
     id,
     invoiceNumber: result.invoiceNumber,
-    companyName: result.invoiceName,
-    address: result.invoiceAddress,
-    tradeName: result.invoiceTradeName ?? null,
+    companyName: result.name ?? "",
+    address: result.address ?? "",
+    tradeName: result.tradeName ?? null,
     invoiceCheck: result.invoiceCheck ?? null,
   };
 }

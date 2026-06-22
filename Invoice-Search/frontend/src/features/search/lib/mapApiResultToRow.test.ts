@@ -6,9 +6,9 @@ describe("mapApiResultToRow", () => {
   it("maps all fields correctly", () => {
     const result: InvoiceApiResult = {
       invoiceNumber: "T1234567890123",
-      invoiceName: "Test Company",
-      invoiceAddress: "Tokyo, Japan",
-      invoiceTradeName: "Trade Name",
+      name: "Test Company",
+      address: "Tokyo, Japan",
+      tradeName: "Trade Name",
       invoiceCheck: true,
     };
     const row = mapApiResultToRow(result, "test-id");
@@ -22,11 +22,18 @@ describe("mapApiResultToRow", () => {
     });
   });
 
+  it("maps missing name/address to empty strings", () => {
+    const result: InvoiceApiResult = { invoiceNumber: "T1234567890123" };
+    const row = mapApiResultToRow(result, "id-0");
+    expect(row.companyName).toBe("");
+    expect(row.address).toBe("");
+  });
+
   it("maps optional tradeName as null when undefined", () => {
     const result: InvoiceApiResult = {
       invoiceNumber: "T1234567890123",
-      invoiceName: "Test Company",
-      invoiceAddress: "Tokyo, Japan",
+      name: "Test Company",
+      address: "Tokyo, Japan",
     };
     const row = mapApiResultToRow(result, "id-1");
     expect(row.tradeName).toBeNull();
@@ -35,8 +42,8 @@ describe("mapApiResultToRow", () => {
   it("maps optional invoiceCheck as null when undefined", () => {
     const result: InvoiceApiResult = {
       invoiceNumber: "T1234567890123",
-      invoiceName: "Test Company",
-      invoiceAddress: "Tokyo, Japan",
+      name: "Test Company",
+      address: "Tokyo, Japan",
     };
     const row = mapApiResultToRow(result, "id-1");
     expect(row.invoiceCheck).toBeNull();
@@ -45,8 +52,8 @@ describe("mapApiResultToRow", () => {
   it("maps invoiceCheck false correctly", () => {
     const result: InvoiceApiResult = {
       invoiceNumber: "T1234567890123",
-      invoiceName: "Test Company",
-      invoiceAddress: "Tokyo, Japan",
+      name: "Test Company",
+      address: "Tokyo, Japan",
       invoiceCheck: false,
     };
     const row = mapApiResultToRow(result, "id-2");
@@ -56,8 +63,8 @@ describe("mapApiResultToRow", () => {
   it("uses the provided id", () => {
     const result: InvoiceApiResult = {
       invoiceNumber: "T1234567890123",
-      invoiceName: "Test Company",
-      invoiceAddress: "Tokyo, Japan",
+      name: "Test Company",
+      address: "Tokyo, Japan",
     };
     expect(mapApiResultToRow(result, "custom-id").id).toBe("custom-id");
   });

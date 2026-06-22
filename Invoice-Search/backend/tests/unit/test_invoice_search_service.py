@@ -41,7 +41,29 @@ async def test_search_invoices_maps_announcement_fields(settings: Settings) -> N
     assert results[0].name == "テスト株式会社"
     assert results[0].address == "東京都千代田区"
     assert results[0].trade_name == "テストブランド"
-    assert results[0].invoice_check == "01"
+    # process "01"（有効登録）→ 登録済み (True)
+    assert results[0].invoice_check is True
+
+
+@respx.mock
+async def test_search_invoices_maps_revoked_process_to_false(settings: Settings) -> None:
+    respx.get(settings.invoice_api_url).mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "announcement": [
+                    {"registratedNumber": "T1234567890123", "name": "取消済", "process": "02"},
+                    {"registratedNumber": "T9999999999999", "name": "不明"},
+                ]
+            },
+        )
+    )
+
+    results = await search_invoices(["T1234567890123", "T9999999999999"], settings)
+
+    # process "02"（取消）→ 未登録 (False)、process 欠如 → 不明 (None)
+    assert results[0].invoice_check is False
+    assert results[1].invoice_check is None
 
 
 @respx.mock

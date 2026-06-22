@@ -18,13 +18,13 @@ describe("buildConsistencyRows", () => {
   const apiResults: InvoiceApiResult[] = [
     {
       invoiceNumber: "T1234567890123",
-      invoiceName: "Test Co",
-      invoiceAddress: "Tokyo",
+      name: "Test Co",
+      address: "Tokyo",
     },
     {
       invoiceNumber: "T9876543210987",
-      invoiceName: "Different Name",
-      invoiceAddress: "Osaka",
+      name: "Different Name",
+      address: "Osaka",
     },
   ];
 

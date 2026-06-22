@@ -3,18 +3,18 @@ import type { InvoiceApiResult } from "../src/features/search/types";
 
 /**
  * API エンドポイントのモックヘルパー。
- * page.route で **\/api/invoicesearch_webapi をインターセプトして
- * 指定した結果を返す。バックエンドの起動なしに安定した E2E を実現する。
+ * page.route で **\/api/invoice-search をインターセプトして
+ * `{ results: [...] }` を返す。バックエンドの起動なしに安定した E2E を実現する。
  */
 export async function mockInvoiceApi(
   page: Page,
   results: InvoiceApiResult[],
 ): Promise<void> {
-  await page.route("**/api/invoicesearch_webapi", (route: Route) => {
+  await page.route("**/api/invoice-search", (route: Route) => {
     void route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(results),
+      body: JSON.stringify({ results }),
     });
   });
 }
@@ -26,7 +26,7 @@ export async function mockInvoiceApiError(
   page: Page,
   status = 500,
 ): Promise<void> {
-  await page.route("**/api/invoicesearch_webapi", (route: Route) => {
+  await page.route("**/api/invoice-search", (route: Route) => {
     void route.fulfill({
       status,
       contentType: "application/json",
@@ -76,16 +76,16 @@ export async function openSidebarIfMobile(
 export const MOCK_INVOICE_RESULTS: InvoiceApiResult[] = [
   {
     invoiceNumber: "T1234567890123",
-    invoiceName: "株式会社テスト",
-    invoiceAddress: "東京都千代田区1-1-1",
-    invoiceTradeName: "テスト商店",
+    name: "株式会社テスト",
+    address: "東京都千代田区1-1-1",
+    tradeName: "テスト商店",
     invoiceCheck: true,
   },
   {
     invoiceNumber: "T9876543210987",
-    invoiceName: "有限会社サンプル",
-    invoiceAddress: "大阪府大阪市2-2-2",
-    invoiceTradeName: undefined,
+    name: "有限会社サンプル",
+    address: "大阪府大阪市2-2-2",
+    tradeName: null,
     invoiceCheck: false,
   },
 ];
