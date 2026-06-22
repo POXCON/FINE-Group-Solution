@@ -41,7 +41,13 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
         Username: email,
         Password: password,
       });
-      const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+      // CognitoUser は Pool の Storage を継承せず既定で localStorage を使うため、
+      // ポータルと共有する preference のストレージを明示し、保存先を SSO と一致させる。
+      const cognitoUser = new CognitoUser({
+        Username: email,
+        Pool: userPool,
+        Storage: resolveStorage(readPreference()),
+      });
 
       cognitoUser.authenticateUser(authDetails, {
         onSuccess: (session: CognitoSession) => {

@@ -13,9 +13,16 @@ interface MockPayload {
   "cognito:groups"?: unknown;
 }
 
+interface CognitoUserOptions {
+  Username: string;
+  Pool: unknown;
+  Storage?: Storage;
+}
+
 let loginPayload: MockPayload = {};
 let sessionPayload: MockPayload = {};
 let hasCurrentUser = true;
+let capturedUserStorage: Storage | undefined;
 
 function makeSession(payload: MockPayload) {
   return {
@@ -32,6 +39,11 @@ vi.mock("amazon-cognito-identity-js", () => {
     constructor(_: unknown) {}
   }
   class CognitoUser {
+    constructor(options?: CognitoUserOptions) {
+      if (options) {
+        capturedUserStorage = options.Storage;
+      }
+    }
     authenticateUser(_: unknown, callbacks: { onSuccess: (s: unknown) => void }): void {
       callbacks.onSuccess(makeSession(loginPayload));
     }
@@ -59,6 +71,7 @@ describe("createCognitoAuthClient groups handling", () => {
     loginPayload = {};
     sessionPayload = {};
     hasCurrentUser = true;
+    capturedUserStorage = undefined;
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -96,5 +109,19 @@ describe("createCognitoAuthClient groups handling", () => {
     };
     const user = await client.getCurrentUser();
     expect(user?.groups).toEqual(["fine-admin"]);
+  });
+
+  it("login passes the session storage to CognitoUser when preference is unset (default)", async () => {
+    loginPayload = { email: "user@example.com" };
+    await client.login({ email: "user@example.com", password: "password123" });
+    expect(capturedUserStorage).toBe(window.sessionStorage);
+  });
+
+  it("login passes the local storage to CognitoUser when preference is 'local'", async () => {
+    window.localStorage.setItem("fine-portal.remember", "local");
+    const localClient = createCognitoAuthClient({ userPoolId: "pool", clientId: "client" });
+    loginPayload = { email: "user@example.com" };
+    await localClient.login({ email: "user@example.com", password: "password123" });
+    expect(capturedUserStorage).toBe(window.localStorage);
   });
 });
