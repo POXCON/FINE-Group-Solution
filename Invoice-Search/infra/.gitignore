@@ -5,3 +5,8 @@ cdk.out/
 !jest.config.js
 .cdk.staging/
 *.tsbuildinfo
+
+# デプロイ成果物（ローカル専用）
+cdk-outputs*.json
+deploy-*.log
+*.log
