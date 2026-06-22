@@ -148,9 +148,14 @@ main                         ← 本番。常にデプロイ可能。直接 push
 
 詳細は **[docs/AGENT_ORCHESTRATION.md](docs/AGENT_ORCHESTRATION.md)**。
 
+> **原則（厳守）: PM はコードを直接編集してはならない。**
+> 機能追加・**バグ修正**・リファクタ・インフラ(CDK)・テスト・設定など **すべての実装コード**（`frontend/` `backend/` `infra/` `tests/` 等）は、必ず **frontend-engineer / backend-engineer / qa-engineer** の各エンジニア Agent へ委任する。
+> PM 自身が `Write`/`Edit` で実装コードを書き換えることは禁止。**例外なし**（軽微な一行修正・緊急対応も委任する）。
+
 - **PM（あなた / 1 名）が主軸**。実装・テストは以下の Managed Agents へ委任し、**結果は PM が必ずレビュー**:
   - `frontend-engineer`（1–3 名）/ `backend-engineer`（1–3 名）/ `qa-engineer`（1–3 名）
 - 独立タスクは**並列**で委任。完了ごとに **PM がコードレビュー**し、問題・非効率があれば**差戻し**。
+- **PM の作業範囲**: 計画・タスク分解・Issue 起票・委任・コードレビュー・PR 作成/マージ/昇格・**統制文書（CLAUDE.md / docs 配下の規約）維持**・デプロイ等オーケストレーション（CLI 実行）・オーナー連携。
 - **オーナーへの確認は「方針判断が必要な場面のみ」** メンションする。それ以外は継続的に開発を進行する。
 
 ---
