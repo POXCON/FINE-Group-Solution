@@ -13,13 +13,37 @@ export function ConsistencyCheckPage(): React.JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [rows, setRows] = useState<ConsistencyRow[]>([]);
   const checkMutation = useConsistencyCheck({ userId: user?.email });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0] ?? null;
+  const selectFile = (file: File | null): void => {
     setSelectedFile(file);
     setFileError(null);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    selectFile(event.target.files?.[0] ?? null);
+  };
+
+  // ドラッグ&ドロップ。preventDefault しないとブラウザがファイルを開いてしまう。
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0] ?? null;
+    if (file) {
+      selectFile(file);
+    }
   };
 
   const handleCheck = async (): Promise<void> => {
@@ -58,13 +82,21 @@ export function ConsistencyCheckPage(): React.JSX.Element {
         </div>
 
         <div
-          className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-box border-2 border-dashed border-base-300 bg-base-200/40 px-6 py-10 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+          className={`group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-box border-2 border-dashed px-6 py-10 text-center transition-colors ${
+            isDragActive
+              ? "border-primary bg-primary/10"
+              : "border-base-300 bg-base-200/40 hover:border-primary/50 hover:bg-primary/5"
+          }`}
           onClick={() => fileInputRef.current?.click()}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
           }}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           role="button"
           tabIndex={0}
+          data-testid="csv-dropzone"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-base-100 text-base-content/40 shadow-sm transition-colors group-hover:text-primary">
             <svg
