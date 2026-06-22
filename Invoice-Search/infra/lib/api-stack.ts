@@ -58,8 +58,8 @@ export class ApiStack extends cdk.Stack {
         COGNITO_USER_POOL_ID: props.userPool.userPoolId,
         COGNITO_APP_CLIENT_ID: props.userPoolClient.userPoolClientId,
         COGNITO_REGION: this.region,
-        // invoice-search グループ所属者のみアクセス可。非所属は 403 で遮断。
-        REQUIRED_COGNITO_GROUP: "invoice-search",
+        // fine-admin グループ所属者のみアクセス可。非所属は 403 で遮断。
+        REQUIRED_COGNITO_GROUP: "fine-admin",
         INVOICE_APP_ID: ntaAppId,
         INVOICE_API_URL: ntaApiUrl,
         INVOICE_API_TIMEOUT_SECONDS: "10",

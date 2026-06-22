@@ -1,5 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { loginWithMock, openSidebarIfMobile, SEARCH_PATH } from "./helpers";
+import {
+  loginWithMock,
+  openSidebarIfMobile,
+  seedNonAdminSession,
+  SEARCH_PATH,
+} from "./helpers";
 
 /**
  * 認証フロー E2E テスト（SSO 統合後）
@@ -42,6 +47,16 @@ test.describe("Authentication flow", () => {
     await stubPortalRoot(page);
     // base 相対の空パス → /invoice-search/ （アプリのルート）
     await page.goto("");
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
+    await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
+  });
+
+  test("認証済みでも非 fine-admin（店舗ユーザー）はポータル（/）へリダイレクトされる", async ({
+    page,
+  }) => {
+    await stubPortalRoot(page);
+    await seedNonAdminSession(page);
+    await page.goto(SEARCH_PATH);
     await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
     await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });

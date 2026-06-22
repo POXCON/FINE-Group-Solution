@@ -12,7 +12,19 @@ describe("createMockAuthClient", () => {
   describe("login", () => {
     it("resolves with user for valid credentials", async () => {
       const user = await client.login({ email: "test@example.com", password: "password123" });
-      expect(user).toEqual({ email: "test@example.com" });
+      expect(user).toEqual({ email: "test@example.com", groups: ["fine-admin"] });
+    });
+
+    it("includes fine-admin group so dev/E2E users pass the role guard", async () => {
+      const user = await client.login({ email: "test@example.com", password: "password123" });
+      expect(user.groups).toContain("fine-admin");
+    });
+
+    it("persists groups in sessionStorage", async () => {
+      await client.login({ email: "test@example.com", password: "password123" });
+      const stored = sessionStorage.getItem("invoice-search.mock-auth-user");
+      expect(stored).not.toBeNull();
+      expect(JSON.parse(stored ?? "{}").groups).toEqual(["fine-admin"]);
     });
 
     it("rejects for invalid email format", async () => {
@@ -53,10 +65,25 @@ describe("createMockAuthClient", () => {
       expect(user).toBeNull();
     });
 
-    it("returns user after login", async () => {
+    it("returns user with groups after login", async () => {
       await client.login({ email: "test@example.com", password: "password123" });
       const user = await client.getCurrentUser();
-      expect(user).toEqual({ email: "test@example.com" });
+      expect(user).toEqual({ email: "test@example.com", groups: ["fine-admin"] });
+    });
+
+    it("restores legacy stored users (without groups) as fine-admin", async () => {
+      sessionStorage.setItem(
+        "invoice-search.mock-auth-user",
+        JSON.stringify({ email: "legacy@example.com" }),
+      );
+      const user = await client.getCurrentUser();
+      expect(user).toEqual({ email: "legacy@example.com", groups: ["fine-admin"] });
+    });
+
+    it("returns null when stored JSON has no email", async () => {
+      sessionStorage.setItem("invoice-search.mock-auth-user", JSON.stringify({ groups: [] }));
+      const user = await client.getCurrentUser();
+      expect(user).toBeNull();
     });
 
     it("returns null after logout", async () => {
