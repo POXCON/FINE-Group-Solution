@@ -21,10 +21,11 @@ DB / VPC / NAT は無し。アイドル時はほぼ $0。
 ## 事前準備：SSM パラメータ（国税庁 公表 Web-API 設定）
 デプロイ前に 2 つのパラメータを作成（値はお手元の登録情報）:
 ```powershell
-aws ssm put-parameter --name "/fine/invoice-search/nta-app-id"  --type String --value "<国税庁から発行された App ID>"
-aws ssm put-parameter --name "/fine/invoice-search/nta-api-url" --type String --value "<国税庁 公表Web-API のURL>"
+aws ssm put-parameter --name "/fine/invoice-search/nta-app-id"  --type String --value "<国税庁から発行された App ID（申請完了メールの実値）>"
+aws ssm put-parameter --name "/fine/invoice-search/nta-api-url" --type String --value "https://web-api.invoice-kohyo.nta.go.jp/1/num"
 ```
-> App ID は機微度が低いため String。より厳格にするなら SecureString + CDK 側参照に変更可。
+> URL は番号検索エンドポイント（Ver.1, `/num`）のベース。バックエンドが `id/number/day/type=21/history=0` を自動付与する（`?クエリ` は付けない）。
+> App ID は申請後メールで発行される実値。**公開リポジトリにコミットしない**こと（SSM のみ）。SecureString + CDK 側参照に変更も可。
 
 ## デプロイ手順
 ```powershell
