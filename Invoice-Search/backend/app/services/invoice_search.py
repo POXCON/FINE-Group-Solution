@@ -21,6 +21,20 @@ logger = get_logger(__name__)
 
 _JST = timezone(timedelta(hours=9), "JST")
 
+# NTA 公表 Web-API の `process` は登録のライフサイクルを表す。
+# 取消・失効に相当するコードは「未登録」(False)、その他の有効な登録は
+# 「登録済み」(True)、フィールド欠如は「不明」(None) とする。
+# TODO: 正式なコード集合を国税庁仕様 / PM と確認する。
+_REVOKED_PROCESS_CODES = {"02", "03", "99"}
+
+
+def _interpret_registration_status(item: dict[str, Any]) -> bool | None:
+    """Map the NTA `process` code to a registration boolean (or None)."""
+    process = item.get("process")
+    if process is None:
+        return None
+    return str(process) not in _REVOKED_PROCESS_CODES
+
 
 class InvoiceApiError(Exception):
     """Raised when the upstream NTA Web-API call fails irrecoverably."""
@@ -46,10 +60,7 @@ def _map_announcement(item: dict[str, Any]) -> InvoiceSearchResult:
         name=item.get("name"),
         address=item.get("address"),
         tradeName=item.get("tradeName"),
-        # TODO: Confirm authoritative NTA field for registration status
-        # (active/revoked). Using `process` as a best-effort placeholder
-        # until confirmed; null when unavailable.
-        invoiceCheck=item.get("process"),
+        invoiceCheck=_interpret_registration_status(item),
     )
 
 

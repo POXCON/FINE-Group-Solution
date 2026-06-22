@@ -38,5 +38,8 @@ export function createMockAuthClient(): AuthClient {
 
   const getCurrentUser = (): Promise<AuthUser | null> => Promise.resolve(readStoredUser());
 
-  return { login, logout, getCurrentUser };
+  // モック認証ではトークンを発行しない（バックエンドは AUTH_DISABLED 前提）。
+  const getToken = (): Promise<string | null> => Promise.resolve(null);
+
+  return { login, logout, getCurrentUser, getToken };
 }

@@ -39,10 +39,12 @@ class InvoiceSearchResult(BaseModel):
     address: str | None = Field(default=None, alias="address")
     # 屋号 (trade name). Not always published; null when unavailable.
     trade_name: str | None = Field(default=None, alias="tradeName")
-    # 登録状況 (registration status: active/revoked etc.).
+    # 登録状況 (registration status). True = 登録済み, False = 失効/取消,
+    # None = 不明（公表APIに該当フィールドが無い場合）。
+    # NTA `process` コードの解釈は services 層に集約している。
     # TODO: Confirm exact NTA Web-API field semantics for revocation status
-    # (`process`/`kind`) and map to a stable enum once confirmed with PM.
-    invoice_check: str | None = Field(default=None, alias="invoiceCheck")
+    # (`process`/`kind`) and the authoritative code set with PM.
+    invoice_check: bool | None = Field(default=None, alias="invoiceCheck")
 
 
 class InvoiceSearchResponse(BaseModel):

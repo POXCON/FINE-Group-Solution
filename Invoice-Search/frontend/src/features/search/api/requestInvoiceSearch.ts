@@ -1,36 +1,39 @@
 import { ApiError } from "@/shared/lib/errors";
+import { authClient } from "@/features/auth/api/authClient";
 import { invoiceApiResponseSchema } from "../types";
 import type { InvoiceApiResult } from "../types";
 
 interface InvoiceSearchRequestOptions {
   invoiceNumbers: string[];
+  /** 互換のため受け取るが本文には含めない（ユーザーは JWT からサーバ側で解決）。 */
   userId?: string;
   signal?: AbortSignal;
 }
 
 /**
- * Calls the Invoice Search backend (FastAPI) to resolve invoice numbers
- * against the public registry. Validates the response shape with Zod so
- * unexpected payloads fail fast instead of crashing the UI.
+ * Calls the Invoice Search backend (FastAPI `POST /api/invoice-search`) to
+ * resolve invoice numbers against the public registry. The Cognito ID token
+ * (when authenticated) is attached as a Bearer token; in mock-auth mode no
+ * token is sent and the backend runs with AUTH_DISABLED. The response shape
+ * is validated with Zod so unexpected payloads fail fast.
  */
 export async function requestInvoiceSearch({
   invoiceNumbers,
-  userId,
   signal,
 }: InvoiceSearchRequestOptions): Promise<InvoiceApiResult[]> {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("VITE_API_BASE_URL is not configured.");
+  // 未設定なら同一オリジン相対パス（CloudFront 経由で API Gateway へ）。
+  const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = await authClient.getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${baseUrl}/api/invoicesearch_webapi`, {
+  const response = await fetch(`${baseUrl}/api/invoice-search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userId: userId ?? null,
-      invoiceNum: invoiceNumbers,
-      isDebug: import.meta.env.MODE === "development",
-    }),
+    headers,
+    body: JSON.stringify({ invoiceNum: invoiceNumbers }),
     signal,
   });
 
@@ -44,5 +47,5 @@ export async function requestInvoiceSearch({
     throw new Error("Invoice search response did not match the expected shape.");
   }
 
-  return parsed.data;
+  return parsed.data.results;
 }

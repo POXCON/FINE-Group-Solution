@@ -41,8 +41,8 @@ describe("useInvoiceSearch", () => {
     const mockResult = [
       {
         invoiceNumber: "T1234567890123",
-        invoiceName: "Test Co",
-        invoiceAddress: "Tokyo",
+        name: "Test Co",
+        address: "Tokyo",
       },
     ];
     vi.mocked(requestInvoiceSearch).mockResolvedValue(mockResult);
