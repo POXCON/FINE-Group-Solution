@@ -193,15 +193,6 @@ test.describe("UI/UX スクリーンショット（Desktop）", () => {
     }
   });
 
-  test("login ページのスクリーンショット", async ({ page }) => {
-    await page.goto("/login");
-    await page.waitForLoadState("networkidle");
-    await page.screenshot({
-      path: path.join(screenshotDir, "desktop-login.png"),
-      fullPage: true,
-    });
-  });
-
   test("search ページ（空状態）のスクリーンショット", async ({ page }) => {
     await loginWithMock(page);
     await page.waitForLoadState("networkidle");

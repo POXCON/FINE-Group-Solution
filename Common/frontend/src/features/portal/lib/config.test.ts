@@ -11,8 +11,8 @@ describe("resolveInvoiceSearchUrl", () => {
     expect(resolveInvoiceSearchUrl()).toBe("https://custom.example.com");
   });
 
-  it("falls back to the default CloudFront URL when unset", () => {
+  it("falls back to the same-origin /invoice-search/ subpath when unset", () => {
     vi.stubEnv("VITE_INVOICE_SEARCH_URL", "");
-    expect(resolveInvoiceSearchUrl()).toBe("https://d2f2iacxluod2n.cloudfront.net");
+    expect(resolveInvoiceSearchUrl()).toBe("/invoice-search/");
   });
 });

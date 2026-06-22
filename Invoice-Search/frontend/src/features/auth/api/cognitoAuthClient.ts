@@ -4,6 +4,7 @@ import {
   CognitoUserPool,
 } from "amazon-cognito-identity-js";
 import type { AuthClient, AuthUser, LoginCredentials } from "../types";
+import { clearPreference, readPreference, resolveStorage } from "../lib/authStorage";
 
 interface CognitoConfig {
   userPoolId: string;
@@ -24,9 +25,12 @@ type CognitoSession = {
 };
 
 export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
+  // ポータルが選択したストレージ（fine-portal.remember）と同じストレージで
+  // pool を構築し、同一 clientId・同一プールが作成したセッションを共有する（SSO）。
   const userPool = new CognitoUserPool({
     UserPoolId: config.userPoolId,
     ClientId: config.clientId,
+    Storage: resolveStorage(readPreference()),
   });
 
   const login = ({ email, password }: LoginCredentials): Promise<AuthUser> =>
@@ -52,6 +56,9 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
       if (cognitoUser) {
         cognitoUser.signOut();
       }
+      // SSO 共有セッションを確実に消すため、両ストレージの痕跡と
+      // ポータルの preference をクリアする。
+      clearPreference();
       resolve();
     });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -27,7 +27,6 @@ function renderWithRoute(authValue: AuthContextValue, initialPath = "/protected"
     <AuthContext.Provider value={authValue}>
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
-          <Route path="/login" element={<div>Login Page</div>} />
           <Route element={<ProtectedRoute />}>
             <Route path="/protected" element={<div>Protected Content</div>} />
           </Route>
@@ -38,21 +37,48 @@ function renderWithRoute(authValue: AuthContextValue, initialPath = "/protected"
 }
 
 describe("ProtectedRoute", () => {
+  const originalHref = window.location.href;
+
+  beforeEach(() => {
+    // window.location.href への代入を観測できるようモック化する。
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: { ...window.location, href: originalHref },
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("shows loading spinner when initializing", () => {
     const auth = makeAuthContext({ isInitializing: true });
     renderWithRoute(auth);
     expect(screen.getByLabelText("common.loading")).toBeDefined();
   });
 
-  it("redirects to login when user is not authenticated", () => {
+  it("redirects to the portal (/) when user is not authenticated", () => {
     const auth = makeAuthContext({ user: null, isInitializing: false });
     renderWithRoute(auth);
-    expect(screen.getByText("Login Page")).toBeDefined();
+    expect(window.location.href).toBe("/");
+  });
+
+  it("does not redirect while initializing", () => {
+    const auth = makeAuthContext({ user: null, isInitializing: true });
+    renderWithRoute(auth);
+    expect(window.location.href).toBe(originalHref);
   });
 
   it("renders protected content when user is authenticated", () => {
     const auth = makeAuthContext({ user: { email: "user@test.com" }, isInitializing: false });
     renderWithRoute(auth);
     expect(screen.getByText("Protected Content")).toBeDefined();
+  });
+
+  it("does not redirect when user is authenticated", () => {
+    const auth = makeAuthContext({ user: { email: "user@test.com" }, isInitializing: false });
+    renderWithRoute(auth);
+    expect(window.location.href).toBe(originalHref);
   });
 });
