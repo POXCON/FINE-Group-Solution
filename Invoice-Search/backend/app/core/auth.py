@@ -33,6 +33,7 @@ class AuthenticatedUser:
 
     user_id: str
     email: str | None = None
+    groups: tuple[str, ...] = ()
 
 
 class JWKSClient:
@@ -103,10 +104,37 @@ async def _verify_cognito_token(token: str, settings: Settings) -> Authenticated
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         ) from exc
 
+    groups = _extract_groups(claims)
+    _enforce_required_group(groups, settings)
+
     return AuthenticatedUser(
         user_id=str(claims.get("sub", "")),
         email=claims.get("email"),
+        groups=groups,
     )
+
+
+def _extract_groups(claims: dict[str, Any]) -> tuple[str, ...]:
+    """Extract the Cognito group memberships from the token claims."""
+    raw_groups = claims.get("cognito:groups")
+    if not isinstance(raw_groups, list):
+        return ()
+    return tuple(str(group) for group in raw_groups)
+
+
+def _enforce_required_group(groups: tuple[str, ...], settings: Settings) -> None:
+    """Reject principals that are not members of the required Cognito group.
+
+    When `REQUIRED_COGNITO_GROUP` is empty, no group check is performed.
+    The error message is intentionally generic to avoid leaking which group
+    is required.
+    """
+    required = settings.required_cognito_group
+    if required and required not in groups:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="アクセス権限がありません。",
+        )
 
 
 async def get_current_user(

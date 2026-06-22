@@ -17,6 +17,16 @@ def _clear_settings_cache() -> Iterator[None]:
     get_settings.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def _clear_jwks_cache() -> Iterator[None]:
+    """Reset the process-wide JWKS cache so tests don't reuse stale keys."""
+    from app.core import auth
+
+    auth._jwks_client_cache.clear()
+    yield
+    auth._jwks_client_cache.clear()
+
+
 @pytest.fixture
 def base_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INVOICE_APP_ID", "test-app-id")

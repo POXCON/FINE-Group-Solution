@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     cognito_user_pool_id: str = Field(default="", alias="COGNITO_USER_POOL_ID")
     cognito_region: str = Field(default="ap-northeast-1", alias="COGNITO_REGION")
     cognito_app_client_id: str = Field(default="", alias="COGNITO_APP_CLIENT_ID")
+    required_cognito_group: str = Field(default="", alias="REQUIRED_COGNITO_GROUP")
 
     @property
     def debug(self) -> bool:
