@@ -55,5 +55,27 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
       });
     });
 
-  return { login, logout, getCurrentUser };
+  type CognitoSession = {
+    isValid: () => boolean;
+    getIdToken: () => { getJwtToken: () => string };
+  };
+
+  const getToken = (): Promise<string | null> =>
+    new Promise((resolve) => {
+      const cognitoUser = userPool.getCurrentUser();
+      if (!cognitoUser) {
+        resolve(null);
+        return;
+      }
+      cognitoUser.getSession((error: unknown, session: CognitoSession | null) => {
+        if (error || !session?.isValid()) {
+          resolve(null);
+          return;
+        }
+        // バックエンドは aud=App Client ID を検証するため ID トークンを送る。
+        resolve(session.getIdToken().getJwtToken());
+      });
+    });
+
+  return { login, logout, getCurrentUser, getToken };
 }

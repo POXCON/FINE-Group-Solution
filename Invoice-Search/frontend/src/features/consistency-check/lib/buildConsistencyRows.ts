@@ -20,8 +20,8 @@ export function buildConsistencyRows(
   return csvRows.map((csvRow) => {
     const isValidFormat = isValidInvoiceNumber(csvRow.invoiceNumber);
     const apiResult = isValidFormat ? findApiResult(csvRow, apiResults) : undefined;
-    const apiCompanyName = apiResult?.invoiceName ?? null;
-    const apiAddress = apiResult?.invoiceAddress ?? null;
+    const apiCompanyName = apiResult?.name ?? null;
+    const apiAddress = apiResult?.address ?? null;
     const isConsistent =
       apiCompanyName !== null &&
       apiAddress !== null &&
