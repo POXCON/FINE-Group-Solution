@@ -35,25 +35,50 @@ export async function mockInvoiceApiError(
   });
 }
 
-/** モック認証でログインする共通ヘルパー。 */
+/** mockAuthClient がセッションを読み出す sessionStorage キー。 */
+const MOCK_AUTH_STORAGE_KEY = "invoice-search.mock-auth-user";
+
+/** vite base="/invoice-search/" 配信下のアプリ内パス。先頭スラッシュなしで base 相対解決させる。 */
+export const SEARCH_PATH = "search";
+
+/**
+ * 認証済み状態を作る共通ヘルパー。
+ *
+ * 自前ログイン画面は廃止したため、ログイン UI を操作する代わりに
+ * mockAuthClient が参照する sessionStorage へ直接モックセッションを投入する。
+ * `addInitScript` でページスクリプト実行前に注入することで、アプリ初期化時の
+ * `getCurrentUser()` が認証済みユーザーを返し、ProtectedRoute を通過させる。
+ */
 export async function loginWithMock(
   page: Page,
   email = "test@example.com",
-  password = "password123",
 ): Promise<void> {
-  await page.goto("/login");
-  await page.waitForLoadState("domcontentloaded");
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  // LoginForm は state.from がなければ /dashboard へリダイレクトする
-  // / → /search にリダイレクトされるため /search または /dashboard を許容
-  await page.waitForURL(/\/(search|dashboard)/, { timeout: 15000 });
-  // /dashboard は未定義ルートなので /search へ再ナビゲート
-  if (page.url().includes("/dashboard") || page.url().includes("login")) {
-    await page.goto("/search");
-    await page.waitForURL(/\/search/, { timeout: 10000 });
-  }
+  await page.addInitScript(
+    ([key, value]) => {
+      window.sessionStorage.setItem(key, value);
+    },
+    // groups に fine-admin を含め、ロールガード（管理者専用）を通過させる。
+    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email, groups: ["fine-admin"] })] as const,
+  );
+  // baseURL は .../invoice-search/ なので、先頭スラッシュなしで base 相対解決させる。
+  await page.goto(SEARCH_PATH);
+  await page.waitForURL(/\/invoice-search\/search/, { timeout: 15000 });
+}
+
+/**
+ * 非管理者（fine-admin 非所属の店舗ユーザー）のモックセッションを投入する。
+ * ロールガードにより、保護ルートへ入れずポータル（`/`）へリダイレクトされる想定。
+ */
+export async function seedNonAdminSession(
+  page: Page,
+  email = "staff@example.com",
+): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.sessionStorage.setItem(key, value);
+    },
+    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email, groups: ["store-staff"] })] as const,
+  );
 }
 
 /**

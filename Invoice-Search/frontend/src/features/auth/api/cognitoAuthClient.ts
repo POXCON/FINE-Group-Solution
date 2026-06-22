@@ -4,6 +4,8 @@ import {
   CognitoUserPool,
 } from "amazon-cognito-identity-js";
 import type { AuthClient, AuthUser, LoginCredentials } from "../types";
+import { clearPreference, readPreference, resolveStorage } from "../lib/authStorage";
+import { normalizeGroups } from "../lib/roles";
 
 interface CognitoConfig {
   userPoolId: string;
@@ -13,6 +15,7 @@ interface CognitoConfig {
 interface IdTokenPayload {
   email?: string;
   name?: string;
+  "cognito:groups"?: unknown;
 }
 
 type CognitoSession = {
@@ -24,9 +27,12 @@ type CognitoSession = {
 };
 
 export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
+  // ポータルが選択したストレージ（fine-portal.remember）と同じストレージで
+  // pool を構築し、同一 clientId・同一プールが作成したセッションを共有する（SSO）。
   const userPool = new CognitoUserPool({
     UserPoolId: config.userPoolId,
     ClientId: config.clientId,
+    Storage: resolveStorage(readPreference()),
   });
 
   const login = ({ email, password }: LoginCredentials): Promise<AuthUser> =>
@@ -40,7 +46,11 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
       cognitoUser.authenticateUser(authDetails, {
         onSuccess: (session: CognitoSession) => {
           const payload = session.getIdToken().decodePayload();
-          resolve({ email: payload.email ?? email, name: payload.name });
+          resolve({
+            email: payload.email ?? email,
+            name: payload.name,
+            groups: normalizeGroups(payload["cognito:groups"]),
+          });
         },
         onFailure: (error: unknown) => reject(error),
       });
@@ -52,6 +62,9 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
       if (cognitoUser) {
         cognitoUser.signOut();
       }
+      // SSO 共有セッションを確実に消すため、両ストレージの痕跡と
+      // ポータルの preference をクリアする。
+      clearPreference();
       resolve();
     });
 
@@ -71,6 +84,7 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
         resolve({
           email: payload.email ?? cognitoUser.getUsername(),
           name: payload.name,
+          groups: normalizeGroups(payload["cognito:groups"]),
         });
       });
     });

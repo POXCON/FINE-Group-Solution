@@ -18,13 +18,16 @@ export function LoginForm(): React.JSX.Element {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     event.preventDefault();
     setFieldError(null);
 
-    const parsed = loginSchema.safeParse({ email, password });
+    const parsed = loginSchema.safeParse({ email, password, rememberMe });
     if (!parsed.success) {
       setFieldError(t("auth.invalidCredentials"));
       return;
@@ -33,7 +36,7 @@ export function LoginForm(): React.JSX.Element {
     try {
       await login(parsed.data);
       const state = location.state as LocationState | null;
-      const redirectTo = state?.from?.pathname ?? "/search";
+      const redirectTo = state?.from?.pathname ?? "/";
       navigate(redirectTo, { replace: true });
     } catch (error: unknown) {
       setFieldError(getErrorMessage(error));
@@ -53,8 +56,12 @@ export function LoginForm(): React.JSX.Element {
       </div>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-base-content">{t("auth.loginTitle")}</h1>
-        <p className="mt-1 text-sm text-base-content/60">{t("auth.loginSubtitle")}</p>
+        <h1 className="text-2xl font-bold text-base-content">
+          {t("auth.loginTitle")}
+        </h1>
+        <p className="mt-1 text-sm text-base-content/60">
+          {t("auth.loginSubtitle")}
+        </p>
       </div>
 
       {isMockAuthMode() && (
@@ -95,7 +102,9 @@ export function LoginForm(): React.JSX.Element {
         </label>
 
         <label className="form-control w-full">
-          <span className="label-text mb-1.5 font-medium">{t("auth.password")}</span>
+          <span className="label-text mb-1.5 font-medium">
+            {t("auth.password")}
+          </span>
           <input
             type="password"
             className="input input-bordered w-full focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -105,6 +114,16 @@ export function LoginForm(): React.JSX.Element {
             placeholder="••••••••"
             required
           />
+        </label>
+
+        <label className="label cursor-pointer justify-start gap-2.5 py-0">
+          <input
+            type="checkbox"
+            className="checkbox checkbox-primary checkbox-sm"
+            checked={rememberMe}
+            onChange={(event) => setRememberMe(event.target.checked)}
+          />
+          <span className="label-text text-sm">{t("auth.rememberMe")}</span>
         </label>
 
         {fieldError && (
@@ -121,7 +140,9 @@ export function LoginForm(): React.JSX.Element {
           className="btn btn-primary mt-2 w-full"
           disabled={isAuthenticating}
         >
-          {isAuthenticating && <span className="loading loading-spinner loading-sm" />}
+          {isAuthenticating && (
+            <span className="loading loading-spinner loading-sm" />
+          )}
           {isAuthenticating ? t("auth.signingIn") : t("auth.signIn")}
         </button>
       </form>

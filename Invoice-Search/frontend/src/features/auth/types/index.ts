@@ -1,6 +1,8 @@
 export interface AuthUser {
   email: string;
   name?: string;
+  /** ID トークンの cognito:groups。認可（fine-admin 判定）に用いる。 */
+  readonly groups: readonly string[];
 }
 
 export interface LoginCredentials {

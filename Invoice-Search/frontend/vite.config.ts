@@ -3,6 +3,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
+  // 同一オリジン統合: Invoice-Search は /invoice-search/ サブパスで配信する。
+  base: "/invoice-search/",
   plugins: [react()],
   // amazon-cognito-identity-js が参照する Node.js グローバル `global` をポリフィル
   define: {
@@ -40,8 +42,6 @@ export default defineConfig({
         "src/features/auth/api/authClient.ts",
         "src/features/auth/api/cognitoAuthClient.ts",
         "src/features/auth/components/AuthProvider.tsx",
-        "src/features/auth/components/LoginForm.tsx",
-        "src/features/auth/components/LoginPage.tsx",
         "src/features/auth/types/index.ts",
         "src/features/consistency-check/hooks/",
         "src/features/search/types/",
