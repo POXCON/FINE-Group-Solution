@@ -69,5 +69,5 @@ export function buildSections({
     ],
   };
 
-  return [adminSection, userSection];
+  return [userSection, adminSection];
 }
