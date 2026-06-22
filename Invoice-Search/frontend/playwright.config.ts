@@ -15,7 +15,8 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    // vite base="/invoice-search/" に合わせ、E2E も同サブパスを起点にする。
+    baseURL: "http://127.0.0.1:5173/invoice-search/",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "off",

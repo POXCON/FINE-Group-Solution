@@ -19,7 +19,7 @@ createRoot(rootElement).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter basename="/invoice-search">
             <App />
           </BrowserRouter>
         </AuthProvider>

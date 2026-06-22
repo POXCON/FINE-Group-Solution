@@ -1,80 +1,70 @@
-import { test, expect } from "@playwright/test";
-import { loginWithMock, openSidebarIfMobile } from "./helpers";
+import { test, expect, type Page } from "@playwright/test";
+import { loginWithMock, openSidebarIfMobile, SEARCH_PATH } from "./helpers";
 
 /**
- * 認証フロー E2E テスト
+ * 認証フロー E2E テスト（SSO 統合後）
  *
- * - 未認証ユーザーは /login へリダイレクト
- * - 不正な認証情報ではエラーを表示
- * - モック認証でのログイン成功 → 保護ルートへ遷移
- * - ログアウト → /login へリダイレクト
+ * - 自前ログイン画面は廃止。未認証/セッション無しはポータル（`/`）へ全画面リダイレクト。
+ * - モックセッション投入で認証済み状態 → 保護ルートへ入れる。
+ * - ログアウト → ポータル（`/`）へリダイレクト。
+ *
+ * NOTE: dev サーバは base="/invoice-search/" 配下のみを配信し、ポータル（`/`）は
+ * 別オリジン/別配信のため存在しない。E2E ではオリジン直下 `/` をスタブ HTML で
+ * 差し替え、リダイレクトが確実にポータル（`/`）へ向かうことを検証する。
  */
 
+const PORTAL_MARKER = "PORTAL_STUB_PAGE";
+
+/** オリジン直下 `/`（ポータル）をスタブ HTML に差し替える。 */
+async function stubPortalRoot(page: Page): Promise<void> {
+  await page.route("http://127.0.0.1:5173/", (route) => {
+    void route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: `<!doctype html><html><body><h1>${PORTAL_MARKER}</h1></body></html>`,
+    });
+  });
+}
+
 test.describe("Authentication flow", () => {
-  test("未認証ユーザーが /search へアクセスすると /login にリダイレクトされる", async ({
+  test("未認証ユーザーが /search へアクセスするとポータル（/）へリダイレクトされる", async ({
     page,
   }) => {
-    await page.goto("/search");
-    await expect(page).toHaveURL(/\/login/);
+    await stubPortalRoot(page);
+    await page.goto(SEARCH_PATH);
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
+    await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });
 
-  test("未認証ユーザーが / へアクセスすると /login にリダイレクトされる", async ({
+  test("未認証ユーザーがサブパスのルートへアクセスするとポータル（/）へリダイレクトされる", async ({
     page,
   }) => {
-    await page.goto("/");
-    await expect(page).toHaveURL(/\/login/);
+    await stubPortalRoot(page);
+    // base 相対の空パス → /invoice-search/ （アプリのルート）
+    await page.goto("");
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
+    await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });
 
-  test("ログインページにモックモード通知が表示される", async ({ page }) => {
-    await page.goto("/login");
-    await page.waitForLoadState("domcontentloaded");
-    // Cognito 未設定時はモック通知が表示（role="status" または alert-info クラス）
-    const notice = page.locator('[role="status"], .alert-info').first();
-    await expect(notice).toBeVisible();
-  });
-
-  test("無効なメールアドレスでログインするとエラーが表示される", async ({
-    page,
-  }) => {
-    await page.goto("/login");
-    await page.fill('input[type="email"]', "not-an-email");
-    await page.fill('input[type="password"]', "password123");
-    await page.click('button[type="submit"]');
-    const error = page.getByRole("alert");
-    await expect(error).toBeVisible();
-    // ログインページのままであること
-    await expect(page).toHaveURL(/\/login/);
-  });
-
-  test("短すぎるパスワード（7文字）でログインするとエラーが表示される", async ({
-    page,
-  }) => {
-    await page.goto("/login");
-    await page.fill('input[type="email"]', "test@example.com");
-    await page.fill('input[type="password"]', "short");
-    await page.click('button[type="submit"]');
-    const error = page.getByRole("alert");
-    await expect(error).toBeVisible();
-    await expect(page).toHaveURL(/\/login/);
-  });
-
-  test("有効な認証情報でログインすると保護ルートに入れる", async ({ page }) => {
+  test("モックセッション投入後は保護ルートに入れる", async ({ page }) => {
     await loginWithMock(page);
-    await expect(page).toHaveURL(/\/search/);
+    await expect(page).toHaveURL(/\/invoice-search\/search/);
     // サイドバーにナビゲーションリンクが存在（i18n により日英どちらでも可）
     await expect(
       page.getByRole("link", { name: /Invoice Search|インボイス検索/i }),
     ).toBeVisible();
   });
 
-  test("ログアウトすると /login にリダイレクトされる", async ({ page, isMobile }) => {
+  test("ログアウトするとポータル（/）へリダイレクトされる", async ({ page, isMobile }) => {
+    await stubPortalRoot(page);
     await loginWithMock(page);
-    await expect(page).toHaveURL(/\/search/);
+    await expect(page).toHaveURL(/\/invoice-search\/search/);
 
     // モバイルはサイドバー内のログアウトを開いてからクリック
     await openSidebarIfMobile(page, isMobile);
-    // ログアウトボタン（i18n により日英どちらでも可）
     await page.getByRole("button", { name: /Log out|ログアウト/i }).click();
-    await expect(page).toHaveURL(/\/login/);
+    // ログアウト → user=null → ProtectedRoute が window.location.href="/" を実行
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
+    await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });
 });

@@ -121,15 +121,6 @@ test.describe("UI/UX スクリーンショット（Mobile）", () => {
     }
   });
 
-  test("モバイル: login ページのスクリーンショット", async ({ page }) => {
-    await page.goto("/login");
-    await page.waitForLoadState("networkidle");
-    await page.screenshot({
-      path: path.join(screenshotDir, "mobile-login.png"),
-      fullPage: true,
-    });
-  });
-
   test("モバイル: search ページ（空状態）のスクリーンショット", async ({
     page,
   }) => {
