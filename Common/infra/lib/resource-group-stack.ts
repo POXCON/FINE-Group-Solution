@@ -18,7 +18,7 @@ export class ResourceGroupStack extends cdk.Stack {
     new resourcegroups.CfnGroup(this, "FineResourceGroup", {
       name: "FINE-Group-Solution",
       description:
-        "FINE Group Solution の全リソース（タグ Project=FINE-Group-Solution）",
+        "FINE Group Solution - all resources tagged Project FINE-Group-Solution",
       resourceQuery: {
         type: "TAG_FILTERS_1_0",
         query: {
