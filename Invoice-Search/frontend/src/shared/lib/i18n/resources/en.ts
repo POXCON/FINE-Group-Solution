@@ -42,7 +42,7 @@ export const en = {
       placeholder: "Invoice number (13 digits, leading T optional)",
       addRow: "Add row",
       removeRow: "Remove row",
-      pasteHint: "Paste multiple numbers separated by newline or comma",
+      pasteHint: "Paste cells from Excel, or type manually",
       invalidFormat: "Invalid format. Expected 13 digits, optional leading T.",
       noValidInput: "Please enter at least one valid invoice number.",
       searchError: "Failed to search invoice numbers.",

@@ -44,7 +44,7 @@ export const ja: { translation: TranslationResource } = {
       placeholder: "インボイス番号（13桁、先頭のTは省略可）",
       addRow: "行を追加",
       removeRow: "行を削除",
-      pasteHint: "改行またはカンマ区切りで複数件を貼り付けできます",
+      pasteHint: "Excelのセル貼り付けもしくは手動入力できます",
       invalidFormat: "形式が無効です。13桁の数字（先頭Tは任意）で入力してください。",
       noValidInput: "有効なインボイス番号を1件以上入力してください。",
       searchError: "インボイス番号の検索に失敗しました。",
