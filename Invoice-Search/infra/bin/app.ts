@@ -12,6 +12,12 @@ import { WebStack } from "../lib/web-stack";
  */
 const app = new cdk.App();
 
+// FINE Group Solution 統一タグ（コンソール横断一覧・コスト按分用）。
+cdk.Tags.of(app).add("Project", "FINE-Group-Solution");
+cdk.Tags.of(app).add("Environment", "prod");
+cdk.Tags.of(app).add("ManagedBy", "CDK");
+cdk.Tags.of(app).add("System", "invoice-search");
+
 const env: cdk.Environment = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION ?? "ap-northeast-1",
