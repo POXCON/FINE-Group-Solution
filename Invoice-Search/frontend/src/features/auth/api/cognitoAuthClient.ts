@@ -10,6 +10,19 @@ interface CognitoConfig {
   clientId: string;
 }
 
+interface IdTokenPayload {
+  email?: string;
+  name?: string;
+}
+
+type CognitoSession = {
+  isValid: () => boolean;
+  getIdToken: () => {
+    getJwtToken: () => string;
+    decodePayload: () => IdTokenPayload;
+  };
+};
+
 export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
   const userPool = new CognitoUserPool({
     UserPoolId: config.userPoolId,
@@ -25,7 +38,10 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
       const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
 
       cognitoUser.authenticateUser(authDetails, {
-        onSuccess: () => resolve({ email }),
+        onSuccess: (session: CognitoSession) => {
+          const payload = session.getIdToken().decodePayload();
+          resolve({ email: payload.email ?? email, name: payload.name });
+        },
         onFailure: (error: unknown) => reject(error),
       });
     });
@@ -46,19 +62,18 @@ export function createCognitoAuthClient(config: CognitoConfig): AuthClient {
         resolve(null);
         return;
       }
-      cognitoUser.getSession((error: unknown, session: { isValid: () => boolean } | null) => {
+      cognitoUser.getSession((error: unknown, session: CognitoSession | null) => {
         if (error || !session?.isValid()) {
           resolve(null);
           return;
         }
-        resolve({ email: cognitoUser.getUsername() });
+        const payload = session.getIdToken().decodePayload();
+        resolve({
+          email: payload.email ?? cognitoUser.getUsername(),
+          name: payload.name,
+        });
       });
     });
-
-  type CognitoSession = {
-    isValid: () => boolean;
-    getIdToken: () => { getJwtToken: () => string };
-  };
 
   const getToken = (): Promise<string | null> =>
     new Promise((resolve) => {
