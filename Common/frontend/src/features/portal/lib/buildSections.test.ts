@@ -25,26 +25,26 @@ describe("buildSections", () => {
   describe("admin user", () => {
     const sections = buildSections({ isAdmin: true, invoiceSearchUrl: URL });
 
-    it("shows both admin and everyday sections", () => {
+    it("shows both everyday and admin sections", () => {
       expect(sections).toHaveLength(2);
-      expect(sections[0].titleKey).toBe("portal.adminSection");
-      expect(sections[1].titleKey).toBe("portal.userSection");
+      expect(sections[0].titleKey).toBe("portal.userSection");
+      expect(sections[1].titleKey).toBe("portal.adminSection");
     });
 
     it("enables only the invoice search card in the admin section", () => {
-      const adminCards = sections[0].cards;
+      const adminCards = sections[1].cards;
       const enabled = adminCards.filter((c) => !c.comingSoon);
       expect(enabled).toHaveLength(1);
       expect(enabled[0].id).toBe("invoice-search");
     });
 
     it("wires the invoice search card to the provided URL", () => {
-      const invoice = sections[0].cards.find((c) => c.id === "invoice-search");
+      const invoice = sections[1].cards.find((c) => c.id === "invoice-search");
       expect(invoice?.href).toBe(URL);
     });
 
     it("keeps sales-review and tax-export coming soon without href", () => {
-      const comingSoon = sections[0].cards.filter((c) => c.comingSoon);
+      const comingSoon = sections[1].cards.filter((c) => c.comingSoon);
       expect(comingSoon.map((c) => c.id).sort()).toEqual([
         "sales-review",
         "tax-export",
