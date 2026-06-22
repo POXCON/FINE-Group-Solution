@@ -179,7 +179,7 @@ export function AppLayout(): React.JSX.Element {
                   className="truncate text-sm font-medium text-white"
                   title={user?.email}
                 >
-                  {userName}
+                  {user?.name || userName}
                 </p>
                 <p className="text-xs text-neutral-content/50">
                   {t("brand.signedIn")}
