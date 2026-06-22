@@ -115,7 +115,7 @@ function MoonIcon(): React.JSX.Element {
 
 export function AppLayout(): React.JSX.Element {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
@@ -149,7 +149,7 @@ export function AppLayout(): React.JSX.Element {
       <div className="drawer-content flex min-h-screen flex-col">
         {/* トップバー */}
         <header className="navbar sticky top-0 z-30 flex h-16 min-h-16 items-center gap-2 border-b border-base-300 bg-base-100/90 px-4 backdrop-blur md:px-6">
-          {/* 左側: ハンバーガー（モバイル）＋ ポータルへ戻る ＋ ページ見出し */}
+          {/* 左側: ハンバーガー（モバイル）＋ ページ見出し */}
           <div className="flex flex-1 items-center gap-2 overflow-hidden">
             <label
               htmlFor="sidebar-toggle"
@@ -171,33 +171,12 @@ export function AppLayout(): React.JSX.Element {
               </svg>
             </label>
 
-            <a
-              href="/"
-              className="btn btn-square btn-ghost btn-sm"
-              aria-label={t("common.backToPortal")}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="h-5 w-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                />
-              </svg>
-            </a>
-
             <h1 className="truncate text-base font-semibold text-base-content md:text-lg">
               {t(currentTitle)}
             </h1>
           </div>
 
-          {/* 右側: テーマ / アカウント名 / ログアウト */}
+          {/* 右側: テーマ切替 / アカウント名（ログアウト・戻る導線はサイドバー/ポータル側） */}
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
@@ -219,31 +198,6 @@ export function AppLayout(): React.JSX.Element {
                 {name}
               </span>
             </div>
-
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm gap-2"
-              onClick={() => {
-                void logout();
-              }}
-              aria-label={t("common.logout")}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="h-5 w-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
-                />
-              </svg>
-              <span className="hidden md:inline">{t("common.logout")}</span>
-            </button>
           </div>
         </header>
 
@@ -254,7 +208,7 @@ export function AppLayout(): React.JSX.Element {
         </main>
       </div>
 
-      {/* サイドバー: ブランド ＋ ナビのみ */}
+      {/* サイドバー: ブランド ＋ ナビ ＋ ポータルへ戻る（最下部） */}
       <div className="drawer-side z-40">
         <label
           htmlFor="sidebar-toggle"
@@ -294,6 +248,31 @@ export function AppLayout(): React.JSX.Element {
               </NavLink>
             ))}
           </nav>
+
+          {/* フッター: ポータルへ戻る（同一オリジン全画面遷移） */}
+          <div className="border-t border-white/10 px-3 py-4">
+            <a
+              href="/"
+              aria-label={t("common.backToPortal")}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-content/80 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m11.25 9-3 3m0 0 3 3m-3-3h7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+              <span>{t("common.backToPortal")}</span>
+            </a>
+          </div>
         </aside>
       </div>
     </div>

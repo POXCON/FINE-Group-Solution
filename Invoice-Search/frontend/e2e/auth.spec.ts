@@ -10,7 +10,7 @@ import {
  *
  * - 自前ログイン画面は廃止。未認証/セッション無しはポータル（`/`）へ全画面リダイレクト。
  * - モックセッション投入で認証済み状態 → 保護ルートへ入れる。
- * - ログアウト → ポータル（`/`）へリダイレクト。
+ * - ログアウトはポータル側の責務（本アプリのヘッダーには存在しない）。
  *
  * NOTE: dev サーバは base="/invoice-search/" 配下のみを配信し、ポータル（`/`）は
  * 別オリジン/別配信のため存在しない。E2E ではオリジン直下 `/` をスタブ HTML で
@@ -67,17 +67,5 @@ test.describe("Authentication flow", () => {
     await expect(
       page.getByRole("link", { name: /Invoice Search|インボイス検索/i }),
     ).toBeVisible();
-  });
-
-  test("ログアウトするとポータル（/）へリダイレクトされる", async ({ page }) => {
-    await stubPortalRoot(page);
-    await loginWithMock(page);
-    await expect(page).toHaveURL(/\/invoice-search\/search/);
-
-    // ログアウトはヘッダー（常時表示）に集約済み。drawer 開閉なしで直接クリックできる。
-    await page.getByRole("button", { name: /Log out|ログアウト/i }).click();
-    // ログアウト → user=null → ProtectedRoute が window.location.href="/" を実行
-    await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
-    await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });
 });
