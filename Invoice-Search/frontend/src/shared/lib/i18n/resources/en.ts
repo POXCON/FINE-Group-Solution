@@ -24,6 +24,7 @@ export const en = {
       dark: "Dark",
       language: "Language",
       logout: "Log out",
+      backToPortal: "Back to portal",
     },
 
     nav: {

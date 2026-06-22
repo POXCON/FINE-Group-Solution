@@ -1,7 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import {
   loginWithMock,
-  openSidebarIfMobile,
   seedNonAdminSession,
   SEARCH_PATH,
 } from "./helpers";
@@ -70,13 +69,12 @@ test.describe("Authentication flow", () => {
     ).toBeVisible();
   });
 
-  test("ログアウトするとポータル（/）へリダイレクトされる", async ({ page, isMobile }) => {
+  test("ログアウトするとポータル（/）へリダイレクトされる", async ({ page }) => {
     await stubPortalRoot(page);
     await loginWithMock(page);
     await expect(page).toHaveURL(/\/invoice-search\/search/);
 
-    // モバイルはサイドバー内のログアウトを開いてからクリック
-    await openSidebarIfMobile(page, isMobile);
+    // ログアウトはヘッダー（常時表示）に集約済み。drawer 開閉なしで直接クリックできる。
     await page.getByRole("button", { name: /Log out|ログアウト/i }).click();
     // ログアウト → user=null → ProtectedRoute が window.location.href="/" を実行
     await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });

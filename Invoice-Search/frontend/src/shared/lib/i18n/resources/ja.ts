@@ -26,6 +26,7 @@ export const ja: { translation: TranslationResource } = {
       dark: "ダーク",
       language: "言語",
       logout: "ログアウト",
+      backToPortal: "ポータルへ戻る",
     },
 
     nav: {

@@ -84,14 +84,8 @@ test.describe("テーマ切替", () => {
     await expect(themeBtn).toBeVisible();
   });
 
-  test("テーマ切替ボタンでテーマが切り替わる", async ({ page, isMobile }) => {
-    // モバイルではサイドバーを開く
-    if (isMobile) {
-      const hamburger = page.locator("label[for='sidebar-toggle']").first();
-      await hamburger.click();
-      await page.waitForTimeout(300);
-    }
-
+  test("テーマ切替ボタンでテーマが切り替わる", async ({ page }) => {
+    // テーマ切替はヘッダー（常時表示）に集約済み。drawer 開閉は不要。
     const themeBtn = page.getByRole("button", { name: /ダーク/i });
     await expect(themeBtn).toBeVisible();
 
@@ -144,22 +138,12 @@ test.describe("UI/UX スクリーンショット（Mobile）", () => {
     });
   });
 
-  test("ダークテーマ: search ページのスクリーンショット", async ({ page, isMobile }) => {
+  test("ダークテーマ: search ページのスクリーンショット", async ({ page }) => {
     await loginWithMock(page);
-    // モバイルではサイドバーを開いてからテーマ切替
-    if (isMobile) {
-      const hamburger = page.locator("label[for='sidebar-toggle']").first();
-      await hamburger.click();
-      await page.waitForTimeout(300);
-    }
+    // テーマ切替はヘッダー（常時表示）に集約済み。drawer 開閉は不要。
     const themeBtn = page.getByRole("button", { name: /ダーク/i });
     if (await themeBtn.isVisible()) {
       await themeBtn.click();
-    }
-    // モバイルではサイドバーを閉じてからスクリーンショット
-    if (isMobile) {
-      await page.locator(".drawer-overlay").click({ force: true });
-      await page.waitForTimeout(200);
     }
     await page.screenshot({
       path: path.join(screenshotDir, "desktop-search-dark.png"),
