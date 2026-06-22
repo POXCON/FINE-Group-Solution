@@ -7,8 +7,8 @@
 
 | 手順書 | 概要 | 状態 |
 |--------|------|------|
-| [aws-account-setup.md](aws-account-setup.md) | **はじめての方向け**: AWS アカウント作成・MFA・予算アラート・管理者ユーザー・CLI/CDK 導入(Windows) までをゼロから | v1.0 |
-| [aws-deployment.md](aws-deployment.md) | AWS デプロイ手順（CDK / Cognito / Aurora Serverless v2 + Data API / Lambda + API Gateway / S3 + CloudFront）。各ステップの確認・コスト管理・破棄・トラブルシュート・用語集付き | v0.2（P3 で検証・確定） |
+| [aws-account-setup.md](aws-account-setup.md) | **はじめての方向け**: AWS アカウント作成・MFA・予算アラート・**無料プランで請求ゼロ運用**・管理者ユーザー・CLI/CDK 導入(Windows) までをゼロから | v1.1 |
+| [aws-deployment.md](aws-deployment.md) | AWS デプロイ手順（CDK / Cognito / Aurora Serverless v2 + Data API / Lambda + API Gateway / S3 + CloudFront）。各ステップの確認・**請求ゼロの仕組み（無料プラン/Budget Actions 自動停止/キルスイッチ）**・破棄・トラブルシュート・用語集付き | v0.3（P3 で検証・確定） |
 
 > **AWS がはじめての場合の順番**: ① [aws-account-setup.md](aws-account-setup.md) →（P3 で `infra/` 作成後）② [aws-deployment.md](aws-deployment.md)。
 
