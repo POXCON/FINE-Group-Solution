@@ -1,8 +1,9 @@
 # Docker Desktop 導入ガイド（はじめての方向け・Windows）
 
-> **対象**: AWS デプロイ前の準備。Invoice-Search の **バックエンド(FastAPI)を Lambda 用にパッケージング**する際、CDK が Docker を使うため必要です。
+> **対象**: Azure デプロイ前の準備。Invoice-Search の **バックエンド(FastAPI)を Container イメージ化**し、
+> Azure Container Registry（ACR）へ push・Container Apps へデプロイする際に Docker を使うため必要です。
 > 所要時間: 約 15〜30 分（ダウンロード・再起動含む）。OS は **Windows 11 Pro / PowerShell** を前提に記載。
-> 完了後 → [`Invoice-Search/infra/README.md`](../../Invoice-Search/infra/README.md) のデプロイ手順へ。最上位ルールは [`/CLAUDE.md`](../../CLAUDE.md)。
+> 完了後 → [`Common/infra/azure/README.md`](../../Common/infra/azure/README.md) のデプロイ手順へ。最上位ルールは [`/CLAUDE.md`](../../CLAUDE.md)。
 
 ---
 
@@ -15,7 +16,7 @@
 ---
 
 ## 0. これは何？／お金はかかる？
-- **Docker** は「アプリを箱（コンテナ）に詰めて、どの環境でも同じように動かす」道具。今回は **Lambda 用に Python 依存をLinux向けにビルドするためだけ**に使います（普段は意識しません）。
+- **Docker** は「アプリを箱（コンテナ）に詰めて、どの環境でも同じように動かす」道具。今回は **Azure Container Apps 用に FastAPI backend のコンテナイメージをビルドするためだけ**に使います（普段は意識しません）。
 - **ライセンス**: 個人〜**小規模事業者（従業員250人未満 かつ 年間売上1,000万USD未満）は無料**（Docker Personal）。本件は無料対象です。
 
 ---
@@ -74,9 +75,9 @@ Docker Desktop → 右上の歯車（Settings）:
 
 ## 6. 完了 → デプロイへ
 **「Engine running」（緑）かつ `docker run hello-world` 成功**を確認できたら準備完了です。
-→ [`Invoice-Search/infra/README.md`](../../Invoice-Search/infra/README.md) の「デプロイ手順」へ進んでください（SSM パラメータ作成 → `cdk bootstrap` → デプロイ）。
+→ [`Common/infra/azure/README.md`](../../Common/infra/azure/README.md) の「Invoice-Search backend のコンテナ化＋ Container App デプロイ」へ進んでください（`docker build` → ACR push → `az containerapp update`）。
 
-> デプロイ中に Docker が使われるのは主に `cdk deploy InvoiceSearchApi`（Lambda の依存ビルド）です。その間 Docker Desktop は起動したままにしてください。
+> デプロイ中に Docker が使われるのは主に `docker build`（backend イメージのビルド）と ACR への push です。その間 Docker Desktop は起動したままにしてください。
 
 ---
 

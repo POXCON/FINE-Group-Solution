@@ -21,9 +21,6 @@ tests/
 .env.*
 !.env.example
 
-# Lambda shim (container uses uvicorn directly)
-lambda_handler.py
-
 # Docs & misc
 README.md
 README_EN.md
