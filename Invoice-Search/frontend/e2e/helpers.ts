@@ -66,18 +66,20 @@ export async function loginWithMock(
 }
 
 /**
- * 非管理者（admin ロール非保持の店舗ユーザー）のモックセッションを投入する。
+ * 非管理者（admin ロール非保持）のモックセッションを投入する。
  * ロールガードにより、保護ルートへ入れずポータル（`/`）へリダイレクトされる想定。
+ * `roles` を差し替えることで store / manager など任意の非 admin ロールを検証できる。
  */
 export async function seedNonAdminSession(
   page: Page,
   email = "staff@example.com",
+  roles: readonly string[] = ["store"],
 ): Promise<void> {
   await page.addInitScript(
     ([key, value]) => {
       window.sessionStorage.setItem(key, value);
     },
-    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email, roles: ["store"] })] as const,
+    [MOCK_AUTH_STORAGE_KEY, JSON.stringify({ email, roles })] as const,
   );
 }
 
