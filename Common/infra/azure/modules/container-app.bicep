@@ -13,7 +13,7 @@ param tags object
 param environmentId string
 
 @description('Container App 名')
-param containerAppName string = 'ca-fine-api'
+param containerAppName string = 'ca-fine-grp-api'
 
 @description('プレースホルダ公開イメージ')
 param containerImage string = 'mcr.microsoft.com/azuredocs/aci-helloworld'

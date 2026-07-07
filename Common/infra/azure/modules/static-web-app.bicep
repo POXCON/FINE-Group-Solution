@@ -10,7 +10,7 @@ param location string
 param tags object
 
 @description('Static Web App 名')
-param staticWebAppName string = 'swa-fine-web'
+param staticWebAppName string = 'swa-fine-grp-web'
 
 resource staticWebApp 'Microsoft.Web/staticSites@2024-11-01' = {
   name: staticWebAppName

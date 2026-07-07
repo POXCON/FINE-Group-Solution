@@ -6,20 +6,32 @@ Front Door・VNet・Private Endpoint は含めない（本番 PRD 構成は別 I
 
 参照 Issue: **#70**（親 Epic #63 / 統括 #62）
 
+> **命名統一（#90）**: 全リソースを **fine-grp 命名**へ統一し、RG を **`rg-fine-grp-dev`** へ
+> 再プロビジョンした（RG はリネーム不可のため新規作成）。旧 `rg-fine-verify-dev` は
+> PM が新環境の疎通確認・NTA 秘密注入の完了後に削除する。
+
 ---
 
 ## プロビジョニング内容（DEV・無料/最安）
 
 | # | リソース | 名前 | リージョン | 備考 |
 |---|----------|------|-----------|------|
-| 1 | Resource Group | `rg-fine-verify-dev` | japaneast | 全リソースの入れ物 |
-| 2 | Log Analytics ワークスペース | `log-fine-verify-dev` | japaneast | PerGB2018・保持 30 日 |
-| 3 | Container Apps Environment | `cae-fine-verify-dev` | japaneast | Consumption |
-| 4 | Container App | `ca-fine-api` | japaneast | プレースホルダ公開イメージ・外部 Ingress(80)・**minReplicas=0** |
-| 5 | Static Web App | `swa-fine-web` | **eastasia** | **Free SKU**（japaneast 非対応のため eastasia） |
+| 1 | Resource Group | `rg-fine-grp-dev` | japaneast | 全リソースの入れ物 |
+| 2 | Log Analytics ワークスペース | `log-fine-grp-dev` | japaneast | PerGB2018・保持 30 日 |
+| 3 | Container Apps Environment | `cae-fine-grp-dev` | japaneast | Consumption |
+| 4 | Container Registry (ACR) | `acrfinegrpdev` | japaneast | **Basic**・admin 有効・実イメージ格納先 |
+| 5 | Container App | `ca-fine-grp-api` | japaneast | 実イメージ（ACR）・外部 Ingress(8000)・**minReplicas=0** |
+| 6 | Static Web App | `swa-fine-grp-web` | **eastasia** | **Free SKU**（japaneast 非対応のため eastasia） |
 
-- Container App の実イメージは `mcr.microsoft.com/azuredocs/aci-helloworld`（プレースホルダ）。
-  実イメージ差し替えは別 Issue **#75**。
+- Container App は Bicep ではプレースホルダ公開イメージ（`aci-helloworld` / port 80）で作成し、
+  デプロイ後に CLI で **ACR の実イメージ（port 8000）** へ差し替える（秘密のレジストリ資格情報を
+  git へ出さないため）。実イメージのビルド・push 手順は本書「backend のコンテナ化」節を参照。
+- **ACR Tasks（クラウドビルド）は当サブスクリプションで不許可**のため、backend イメージは
+  **ローカル Docker でビルド → ACR へ push → `az containerapp update --image`** で反映する。
+
+> **Container Apps Environment のクォータ（重要）**: 1 サブスクリプションにつき **1 リージョン 1 環境**
+> まで。旧 `cae-fine-verify-dev` が存在する間は新 `cae-fine-grp-dev` を同一 Japan East に作成できない。
+> 再プロビジョンの際は旧環境の削除（またはクォータ引き上げ）が前提となる。
 - 全リソース共通タグ: `Project=FINE-Group-Solution` / `Environment=verify-dev` /
   `System=platform` / `ManagedBy=bicep`。
 
@@ -64,6 +76,7 @@ Common/infra/azure/
 ├── modules/
 │   ├── log-analytics.bicep           # Log Analytics ワークスペース
 │   ├── container-apps-env.bicep      # Container Apps Environment
+│   ├── container-registry.bicep      # Azure Container Registry（Basic / 実イメージ格納先）
 │   ├── container-app.bicep           # Container App（プレースホルダ / scale-to-zero）
 │   └── static-web-app.bicep          # Static Web App（Free）
 └── README.md                         # 本書
@@ -75,7 +88,7 @@ Common/infra/azure/
 | `environmentName` | `verify-dev` | 環境名（タグに使用） |
 | `location` | `japaneast` | 主要リソースのリージョン |
 | `staticWebAppLocation` | `eastasia` | Static Web App 用リージョン |
-| `resourceGroupName` | `rg-fine-verify-dev` | Resource Group 名 |
+| `resourceGroupName` | `rg-fine-grp-dev` | Resource Group 名 |
 
 ---
 
@@ -93,7 +106,7 @@ az deployment sub what-if \
 
 # デプロイ
 az deployment sub create \
-  --name fine-azure-verify-dev \
+  --name fine-azure-grp-dev \
   --location japaneast \
   --template-file Common/infra/azure/main.bicep
 ```
@@ -101,12 +114,14 @@ az deployment sub create \
 ### 出力（outputs）
 - `apiIngressFqdn` — Container App（API）の外部 Ingress FQDN
 - `staticWebAppDefaultHostname` — Static Web App の defaultHostname
+- `acrLoginServer` — ACR のログインサーバ（例 `acrfinegrpdev.azurecr.io`）
+- `acrName` — ACR 名
 - `resourceGroupNameOut` — 作成した Resource Group 名
 
 出力の取得例:
 ```bash
 az deployment sub show \
-  --name fine-azure-verify-dev \
+  --name fine-azure-grp-dev \
   --query properties.outputs -o json
 ```
 
@@ -126,10 +141,11 @@ curl -I https://<staticWebAppDefaultHostname>
 Resource Group ごと削除すれば全リソースが消える。
 
 ```bash
-az group delete --name rg-fine-verify-dev --yes --no-wait
+az group delete --name rg-fine-grp-dev --yes --no-wait
 ```
 
 > Static Web App は eastasia だが同一 RG 内に作成されるため、RG 削除で一括破棄される。
+> ACR も同一 RG 内のため一括で消える。
 
 ---
 
@@ -143,7 +159,7 @@ Azure ポータルの Resource Group 一覧 / 各リソースの「タグ」で�
 
 ## フロント2アプリの SWA 配信(同一オリジン・パス分割 / #76)
 
-移行済みの2フロント(Common ポータル / Invoice-Search)を、既存 `swa-fine-web`(Free)へ
+移行済みの2フロント(Common ポータル / Invoice-Search)を、`swa-fine-grp-web`(Free)へ
 **同一オリジン・パス分割**で配信する。
 
 ```
@@ -197,8 +213,8 @@ Common/infra/azure/deploy-swa.sh
 手動で行う場合の要点:
 
 ```bash
-TOKEN=$(az staticwebapp secrets list --name swa-fine-web \
-  --resource-group rg-fine-verify-dev --query "properties.apiKey" -o tsv)
+TOKEN=$(az staticwebapp secrets list --name swa-fine-grp-web \
+  --resource-group rg-fine-grp-dev --query "properties.apiKey" -o tsv)
 npx -y @azure/static-web-apps-cli deploy Common/infra/azure/swa-dist \
   --deployment-token "$TOKEN" --env production
 ```
@@ -210,26 +226,29 @@ SWA の `defaultHostname` を取得し、そのオリジンをアプリ登録の
 Invoice-Search は `origin + /invoice-search/` を使うため **両方**を登録する。
 
 ```bash
-HOSTNAME=$(az staticwebapp show --name swa-fine-web \
-  --resource-group rg-fine-verify-dev --query "defaultHostname" -o tsv)
+HOSTNAME=$(az staticwebapp show --name swa-fine-grp-web \
+  --resource-group rg-fine-grp-dev --query "defaultHostname" -o tsv)
 OBJECT_ID=$(az ad app show --id 76537176-b582-4055-8b3e-cf89e84e1c08 --query id -o tsv)
 
-# spa.redirectUris は既存分も含めた完全な配列で PATCH する(置換されるため)
+# spa.redirectUris は既存分も含めた完全な配列で PATCH する(置換されるため)。
+# 末尾スラッシュ有無の両方＋ /invoice-search/ を登録する。
 az rest --method PATCH \
   --url "https://graph.microsoft.com/v1.0/applications/${OBJECT_ID}" \
   --headers "Content-Type=application/json" \
   --body '{"spa":{"redirectUris":[
     "http://localhost:4280/","http://localhost:5173/",
-    "https://'"${HOSTNAME}"'/","https://'"${HOSTNAME}"'/invoice-search/"
+    "https://'"${HOSTNAME}"'/","https://'"${HOSTNAME}"'",
+    "https://'"${HOSTNAME}"'/invoice-search/"
   ]}}'
 ```
 
-> 検証環境(#76)での実績値: `defaultHostname = nice-water-054d5bc00.7.azurestaticapps.net`
+> `swa-fine-grp-web` の `defaultHostname` は SWA 作成後に確定する(fine-grp 命名は
+> 付与できず、ランダムな `*.azurestaticapps.net` になる)。上記コマンドで取得して置換する。
 
 ### 動作確認
 
 ```bash
-BASE=https://nice-water-054d5bc00.7.azurestaticapps.net
+BASE=https://<swa-fine-grp-web の defaultHostname>
 curl -I "$BASE/"                                   # ポータル(200 / text/html)
 curl -I "$BASE/invoice-search/"                    # 検索アプリ(200 / text/html)
 curl -I "$BASE/invoice-search/assets/<hash>.js"    # 200 / text/javascript(HTML に化けないこと)
@@ -244,11 +263,11 @@ curl -I "$BASE/invoice-search/assets/<hash>.js"    # 200 / text/javascript(HTML 
 
 ---
 
-## Invoice-Search backend のコンテナ化＋ Container App デプロイ(#75)
+## Invoice-Search backend のコンテナ化＋ Container App デプロイ(#75 / #90)
 
-プレースホルダ(`aci-helloworld`)だった `ca-fine-api` を、移行済み FastAPI backend の
-**実イメージ**へ差し替える。ローカル Docker は不要で、`az containerapp up --source` の
-**クラウドビルド**(ACR タスク)でイメージをビルド・push・デプロイする。
+プレースホルダ(`aci-helloworld`)だった `ca-fine-grp-api` を、移行済み FastAPI backend の
+**実イメージ**へ差し替える。当サブスクリプションは **ACR Tasks(クラウドビルド)不許可**のため、
+**ローカル Docker でビルド → `acrfinegrpdev` へ push → `az containerapp update --image`** で反映する。
 
 ### コンテナ構成
 
@@ -268,45 +287,58 @@ curl -I "$BASE/invoice-search/assets/<hash>.js"    # 200 / text/javascript(HTML 
 
 ```bash
 az account set --subscription <SUBSCRIPTION_ID>
+ACR=acrfinegrpdev
+RG=rg-fine-grp-dev
+APP=ca-fine-grp-api
+TAG=$(git rev-parse --short HEAD)
 
-# クラウドビルド(ACR 自動作成)→ 既存 ca-fine-api の image を差し替え
-az containerapp up \
-  --name ca-fine-api \
-  --resource-group rg-fine-verify-dev \
-  --source Invoice-Search/backend \
-  --ingress external \
-  --target-port 8000
+# 1) ローカルビルド → ACR push(ACR Tasks は使わない)
+az acr login --name "$ACR"
+docker build -t "$ACR.azurecr.io/invoice-search-backend:$TAG" Invoice-Search/backend
+docker push "$ACR.azurecr.io/invoice-search-backend:$TAG"
+
+# 2) ACR pull 用の管理者資格情報を Container App の secret として登録(git へは出さない)
+ACR_USER=$(az acr credential show -n "$ACR" --query username -o tsv)
+ACR_PASS=$(az acr credential show -n "$ACR" --query "passwords[0].value" -o tsv)
+az containerapp registry set \
+  --name "$APP" --resource-group "$RG" \
+  --server "$ACR.azurecr.io" --username "$ACR_USER" --password "$ACR_PASS"
+
+# 3) 実イメージへ差し替え＋ ingress を 8000 へ
+az containerapp update --name "$APP" --resource-group "$RG" \
+  --image "$ACR.azurecr.io/invoice-search-backend:$TAG"
+az containerapp ingress update --name "$APP" --resource-group "$RG" \
+  --type external --target-port 8000
 ```
 
-`up` 実行後、非秘密の環境変数を設定する(**秘密は含めない**):
+差し替え後、非秘密の環境変数を設定する(**秘密は含めない**):
 
 ```bash
 az containerapp update \
-  --name ca-fine-api --resource-group rg-fine-verify-dev \
+  --name ca-fine-grp-api --resource-group rg-fine-grp-dev \
   --set-env-vars \
     AZURE_TENANT_ID=555dafe8-9dde-4f98-ac9b-904e08b28c58 \
     "AZURE_API_AUDIENCE=api://76537176-b582-4055-8b3e-cf89e84e1c08" \
     REQUIRED_APP_ROLE=admin \
     AUTH_DISABLED=false \
-    "CORS_ORIGINS=https://nice-water-054d5bc00.7.azurestaticapps.net"
+    "CORS_ORIGINS=https://<swa-fine-grp-web の defaultHostname>"
 ```
 
 - `INVOICE_APP_ID` / `INVOICE_API_URL` は**秘密扱い**のため、ここでは設定しない
   (国税庁 API の App ID は PM が別途 secret として注入する)。
-- `minReplicas=0`(scale-to-zero)を維持する。`up`/`update` では触らない。
+- `minReplicas=0`(scale-to-zero)を維持する。`update` では触らない。
 
 ### コスト影響
 
-- `az containerapp up --source` は **同一 RG に ACR(Basic)を自動作成**し、クラウドで
-  イメージをビルドする。ACR Basic は保管容量に応じた軽微な従量課金(概ね月 $5 前後)。
-- **RG(`rg-fine-verify-dev`)を削除すれば ACR も含め一括で消える**。
+- ACR は Bicep で **同一 RG に Basic** を作成する。保管容量に応じた軽微な従量課金(概ね月 $5 前後)。
+- **RG(`rg-fine-grp-dev`)を削除すれば ACR も含め一括で消える**。
 - Container App 本体は `minReplicas=0` のため無アクセス時は実質無償のまま。
 
 ### 動作確認
 
 ```bash
-FQDN=$(az containerapp show --name ca-fine-api \
-  --resource-group rg-fine-verify-dev \
+FQDN=$(az containerapp show --name ca-fine-grp-api \
+  --resource-group rg-fine-grp-dev \
   --query properties.configuration.ingress.fqdn -o tsv)
 
 # ルート(ヘルス)。初回はコールドスタートで数秒。
@@ -319,7 +351,7 @@ curl -i -X POST "https://$FQDN/api/invoice-search" \
 
 # CORS: 許可オリジンのプリフライトに Access-Control-Allow-Origin が付く
 curl -i -X OPTIONS "https://$FQDN/api/invoice-search" \
-  -H "Origin: https://nice-water-054d5bc00.7.azurestaticapps.net" \
+  -H "Origin: https://<swa-fine-grp-web の defaultHostname>" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: authorization,content-type"
 ```

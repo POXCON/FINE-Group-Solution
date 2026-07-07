@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # deploy-swa.sh — 移行済みフロント2アプリ(Common ポータル / Invoice-Search)を
-# 単一の Azure Static Web App(swa-fine-web / Free)へ「同一オリジン・パス分割」で配信する。
+# 単一の Azure Static Web App(swa-fine-grp-web / Free)へ「同一オリジン・パス分割」で配信する。
 #
 #   ルート "/"              → Common ポータル
 #   サブパス "/invoice-search/" → Invoice-Search
@@ -14,8 +14,8 @@
 # 使い方:
 #   ./deploy-swa.sh
 #
-# 環境変数で上書き可能(既定値は検証環境 rg-fine-verify-dev / swa-fine-web):
-#   RESOURCE_GROUP, SWA_NAME, API_BASE_URL,
+# 環境変数で上書き可能(既定値は検証環境 rg-fine-grp-dev / swa-fine-grp-web):
+#   RESOURCE_GROUP, SWA_NAME, API_APP_NAME, API_BASE_URL,
 #   VITE_AZURE_TENANT_ID, VITE_AZURE_CLIENT_ID, VITE_AZURE_AUTHORITY, VITE_AZURE_API_SCOPE
 #
 set -euo pipefail
@@ -25,9 +25,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 # --- 設定(非秘密 ID のみ。上書き可)---
-RESOURCE_GROUP="${RESOURCE_GROUP:-rg-fine-verify-dev}"
-SWA_NAME="${SWA_NAME:-swa-fine-web}"
-API_BASE_URL="${API_BASE_URL:-https://ca-fine-api.happyhill-20261f59.japaneast.azurecontainerapps.io}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-rg-fine-grp-dev}"
+SWA_NAME="${SWA_NAME:-swa-fine-grp-web}"
+API_APP_NAME="${API_APP_NAME:-ca-fine-grp-api}"
+
+# API のベース URL。未指定なら Container App の FQDN を az から自動取得する
+# (SWA/Container App の実ホスト名は再プロビジョンごとに変わるため、ハードコードしない)。
+if [[ -z "${API_BASE_URL:-}" ]]; then
+  API_FQDN="$(az containerapp show --name "${API_APP_NAME}" --resource-group "${RESOURCE_GROUP}" \
+    --query 'properties.configuration.ingress.fqdn' -o tsv 2>/dev/null || true)"
+  if [[ -z "${API_FQDN}" ]]; then
+    echo "ERROR: API_BASE_URL 未指定かつ ${API_APP_NAME} の FQDN を取得できません。" >&2
+    echo "       Container App 作成後に再実行するか、API_BASE_URL を環境変数で指定してください。" >&2
+    exit 1
+  fi
+  API_BASE_URL="https://${API_FQDN}"
+fi
 VITE_AZURE_TENANT_ID="${VITE_AZURE_TENANT_ID:-555dafe8-9dde-4f98-ac9b-904e08b28c58}"
 VITE_AZURE_CLIENT_ID="${VITE_AZURE_CLIENT_ID:-76537176-b582-4055-8b3e-cf89e84e1c08}"
 VITE_AZURE_AUTHORITY="${VITE_AZURE_AUTHORITY:-https://login.microsoftonline.com/555dafe8-9dde-4f98-ac9b-904e08b28c58}"

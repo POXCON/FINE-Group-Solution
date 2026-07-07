@@ -13,7 +13,7 @@ param tags object
 param logAnalyticsWorkspaceName string
 
 @description('Container Apps Environment 名')
-param environmentName string = 'cae-fine-verify-dev'
+param environmentName string = 'cae-fine-grp-dev'
 
 // 既存ワークスペースを参照して customerId / sharedKey を取得（秘密は output しない）
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
