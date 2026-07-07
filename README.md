@@ -20,7 +20,7 @@ FINE-Group-Solution/
 - **Frontend**: Vite + React + TypeScript + daisyUI + TailwindCSS
 - **Backend**: Python 3.12.10 + FastAPI（Pydantic v2 / SQLAlchemy 2.0）
 - **Middleend**（任意）: BFF
-- **Infra**: AWS（RDS PostgreSQL / Cognito / S3 / ECS or Lambda）※Azure から移行中
+- **Infra**: Azure（Entra ID / Container Apps / Static Web Apps / ACR / Bicep, Japan East）｜DB は将来 PostgreSQL Flexible Server
 
 ## ドキュメント
 | 文書 | 内容 |
