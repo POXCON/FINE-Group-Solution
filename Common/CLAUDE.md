@@ -31,11 +31,16 @@ Common/
 
 ## 3. 認証（本システム固有）
 
-- **Amazon Cognito**（共有プール）を利用。env 未設定時はモック認証へフォールバック。
-  - `VITE_COGNITO_USER_POOL_ID` / `VITE_COGNITO_CLIENT_ID` / `VITE_COGNITO_REGION`
-- ロール判定: ID トークンの `cognito:groups` に **`fine-admin`** が含まれれば管理者。
-- 「ログイン情報を記憶する」トグル: **ON=localStorage（永続）/ OFF=sessionStorage（ブラウザ閉で消去）**。
-  Cognito の `CognitoUserPool({ Storage })` を切り替えて実装する。
+- **Azure Entra ID** を利用。MSAL for JavaScript で認証・トークン管理。env 未設定時はモック認証へフォールバック。
+  - `VITE_AZURE_TENANT_ID`（テナント ID）
+  - `VITE_AZURE_CLIENT_ID`（アプリケーション ID）
+  - `VITE_AZURE_REDIRECT_URI`（リダイレクト URI、例: `http://localhost:5173/auth/callback`）
+  - `VITE_AZURE_SCOPES`（スコープ、例: `https://graph.microsoft.com/.default`）
+- **ロール判定**: ID トークンの `roles` クレーム に **`admin`** / **`store`** / **`manager`** が含まれるかで判定。
+  - Entra ID の **AppRoles** で定義。各ユーザーをロールに割り当てる。
+- **「ログイン情報を記憶する」トグル**: **ON=localStorage（永続）/ OFF=sessionStorage（ブラウザ閉で消去）**。
+  - MSAL の `PublicClientApplication` 初期化時に `cacheLocation` を切り替える（`"localStorage"` / `"sessionStorage"`）。
+  - トグル状態はローカルストレージの `rememberLogin` フラグで保持（トグル値が切り替わると cacheLocation も自動更新）。
 
 ---
 
