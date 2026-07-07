@@ -23,7 +23,7 @@ Common/
 └── frontend/          ← Vite + React + TypeScript(strict) + TailwindCSS + daisyUI
 ```
 
-- backend は当面不要（認証は共有 Cognito プールを利用）。
+- backend は当面不要（認証は共有 **Entra ID**（MSAL）を利用）。
 - フロントは `Invoice-Search/frontend` の構成・認証・テーマ・デザインシステムを流用し、
   FINE デザインシステム（[`/docs/DESIGN_SYSTEM.md`](../docs/DESIGN_SYSTEM.md)）に準拠する。
 
