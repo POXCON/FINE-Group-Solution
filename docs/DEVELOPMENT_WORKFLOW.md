@@ -52,9 +52,9 @@ Issue 起票 → ブランチ作成 → 調査・再利用 → TDD 実装 → �
 | フェーズ | 内容 |
 |----------|------|
 | P0: 現状把握 | 機能棚卸し・依存関係・Azure 連携箇所の洗い出し（Issue 化）。 |
-| P1: バック | FastAPI 構成を Python 3.12.10 標準へ整備、Pydantic v2 / 型・テスト導入、Azure→AWS 接続層を抽象化。 |
+| P1: バック | FastAPI 構成を Python 3.12.10 標準へ整備、Pydantic v2 / 型・テスト導入、インフラ接続層を抽象化。 |
 | P2: フロント | Vite + React + TypeScript + daisyUI + Tailwind へ刷新（antd/MUI 置換）。 |
-| P3: インフラ | Azure → AWS（RDS PostgreSQL / Cognito / S3）へ移行。 |
+| P3: インフラ | Azure 標準化（Entra ID / Container Apps / Static Web Apps / Bicep）。 |
 | P4: 検証 | E2E・回帰テストで機能等価性を確認後、`develop` へ昇格。 |
 
 > 各フェーズは Issue + `feature-*` ブランチで段階的に進める。一括書き換えは避ける。
