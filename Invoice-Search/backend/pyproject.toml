@@ -21,6 +21,9 @@ exclude = ["tests/"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# 非推奨 API の混入を防ぐため DeprecationWarning はエラー扱いにする。
+# 特定の第三者ライブラリの警告を許容する必要が生じた場合のみ ignore を追記する。
+filterwarnings = ["error::DeprecationWarning"]
 
 [tool.coverage.run]
 source = ["app"]
