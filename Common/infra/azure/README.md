@@ -273,8 +273,8 @@ curl -I "$BASE/invoice-search/assets/<hash>.js"    # 200 / text/javascript(HTML 
 
 | ファイル | 役割 |
 |----------|------|
-| `Invoice-Search/backend/Dockerfile` | `python:3.12-slim` / requirements インストール / **非 root**(uid 10001) / `uvicorn app.main:app` を **8000** で起動。Mangum(Lambda shim)は使わない。 |
-| `Invoice-Search/backend/.dockerignore` | tests・キャッシュ・`.env*`(秘密)・`lambda_handler.py` 等を除外。 |
+| `Invoice-Search/backend/Dockerfile` | `python:3.12-slim` / requirements インストール / **非 root**(uid 10001) / `uvicorn app.main:app` を **8000** で起動。 |
+| `Invoice-Search/backend/.dockerignore` | tests・キャッシュ・`.env*`(秘密)等を除外。 |
 
 - FastAPI 側は `CORSMiddleware` を `settings.cors_origins`(= `CORS_ORIGINS` をカンマ分割)で
   構成済み。`Authorization`/`Content-Type` を許可、`allow_credentials=true`。
