@@ -46,12 +46,15 @@ class Settings(BaseSettings):
     invoice_api_timeout_seconds: float = Field(default=10.0, alias="INVOICE_API_TIMEOUT_SECONDS")
     invoice_api_max_retries: int = Field(default=2, alias="INVOICE_API_MAX_RETRIES")
 
-    # --- Auth (Cognito) ---
+    # --- Auth (Microsoft Entra ID) ---
     auth_disabled_raw: str = Field(default="true", alias="AUTH_DISABLED")
-    cognito_user_pool_id: str = Field(default="", alias="COGNITO_USER_POOL_ID")
-    cognito_region: str = Field(default="ap-northeast-1", alias="COGNITO_REGION")
-    cognito_app_client_id: str = Field(default="", alias="COGNITO_APP_CLIENT_ID")
-    required_cognito_group: str = Field(default="", alias="REQUIRED_COGNITO_GROUP")
+    azure_tenant_id: str = Field(default="", alias="AZURE_TENANT_ID")
+    azure_api_audience: str = Field(default="", alias="AZURE_API_AUDIENCE")
+    # ISSUER / JWKS_URI は既定でテナント ID から導出する。明示指定があればそれを優先。
+    issuer_override: str = Field(default="", alias="ISSUER")
+    jwks_uri_override: str = Field(default="", alias="JWKS_URI")
+    required_app_role: str = Field(default="", alias="REQUIRED_APP_ROLE")
+    jwks_cache_ttl_seconds: int = Field(default=3600, alias="JWKS_CACHE_TTL_SECONDS")
 
     @property
     def debug(self) -> bool:
@@ -66,18 +69,29 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
 
     @property
-    def cognito_jwks_url(self) -> str:
-        return (
-            f"https://cognito-idp.{self.cognito_region}.amazonaws.com/"
-            f"{self.cognito_user_pool_id}/.well-known/jwks.json"
-        )
+    def azure_jwks_uri(self) -> str:
+        """Entra JWKS endpoint (override wins, else derived from tenant)."""
+        if self.jwks_uri_override:
+            return self.jwks_uri_override
+        return f"https://login.microsoftonline.com/" f"{self.azure_tenant_id}/discovery/v2.0/keys"
 
     @property
-    def cognito_issuer(self) -> str:
-        return (
-            f"https://cognito-idp.{self.cognito_region}.amazonaws.com/"
-            f"{self.cognito_user_pool_id}"
-        )
+    def azure_issuer(self) -> str:
+        """Expected `iss` claim (override wins, else derived from tenant)."""
+        if self.issuer_override:
+            return self.issuer_override
+        return f"https://login.microsoftonline.com/{self.azure_tenant_id}/v2.0"
+
+    @property
+    def allowed_audiences(self) -> tuple[str, ...]:
+        """Accepted `aud` values: both `api://<appId>` and bare `<appId>`."""
+        audience = self.azure_api_audience.strip()
+        if not audience:
+            return ()
+        prefix = "api://"
+        if audience.startswith(prefix):
+            return (audience, audience[len(prefix) :])
+        return (audience, f"{prefix}{audience}")
 
 
 @lru_cache
