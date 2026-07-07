@@ -59,29 +59,34 @@ FINE-Group-Solution/            ← リポジトリルート（= 01. FINE-Grp）
 ### ミドルエンド（任意）
 - フロントの要求に合わせた集約・整形が必要な場合のみ **BFF（Backend-for-Frontend）** を `middleend/` に設置。
 
-### インフラ / DB（**AWS 標準へ移行中・低コスト最優先**）
+### インフラ / DB（**Azure 標準・低コスト最優先**）
 
-リージョンは **ap-northeast-1（東京）** を標準とする。コスト最小化を基本方針とし、以下を参照アーキテクチャとする。
+リージョンは **Japan East** を標準とする（Static Web Apps のみ **eastasia**）。コスト最小化を基本方針とし、以下を参照アーキテクチャとする。
 
-| レイヤ | 標準（コスト最適） | 理由 / 備考 |
-|--------|--------------------|-------------|
-| 認証 | **Amazon Cognito** | 50,000 MAU まで無料枠。現規模では実質無償。 |
-| フロント配信 | **S3 + CloudFront**（静的ホスティング） | サーバ常時起動不要。ほぼ無料枠内。 |
-| バックエンド実行 | **AWS Lambda + API Gateway**（FastAPI を Mangum で接続） | ゼロスケール・従量課金。低〜スパイク負荷で最安。 |
-| DB | **Aurora Serverless v2 + Data API（アイドル時 0 ACU で自動休止）** | 当グループの想定利用（1 店舗あたり 1 日数名・同時アクセスほぼ無し）では**大半が休止状態**となり、課金はストレージ中心で最安。Data API 利用で **VPC/NAT 不要**。 |
-| ファイル | **S3** | 従量・無料枠あり。 |
-| IaC | **AWS CDK（既定・TypeScript）** | 構成はコード管理。デプロイ手順は [`docs/runbooks/aws-deployment.md`](docs/runbooks/aws-deployment.md)。 |
+**環境分離**:
+- **DEV（開発・検証環境）**: 無料枠活用。公開 Ingress + Azure Entra ID 認証。Front Door なし。
+- **PRD（本番環境）**: 将来の高セキュリティ要件対応（#68）。Front Door Premium + Private Link、条件付きアクセス、Entra ID P1 必須。当面は未構築。
 
-- **DB 選定方針（利用実態ベース）**:
-  - **超低稼働・断続利用（既定）** → **Aurora Serverless v2 + Data API**。未使用時 0 ACU まで自動休止し、復帰は初回リクエストで数秒（業務用途で許容）。VPC/NAT 不要でコスト・構成ともに最小。
-  - **定常的に一定負荷がある場合** → **RDS for PostgreSQL `db.t4g.micro`**（月額約 $12–15・共有1台/システム別スキーマ）。
-- **コスト注意（重要）**: Lambda から **VPC 内 RDS** へ接続する場合の **NAT Gateway は月額約 $32 + 通信費** が発生しやすい。Aurora Serverless v2 の **Data API（HTTPS 接続）**採用で原則回避。やむを得ず VPC RDS を使う場合は **VPC エンドポイント**（NAT 無し）か RDS Proxy を用いる。
-- 認証は **Cognito**（無料枠内）。店舗ごとのユーザー払い出しもこれで標準化。
-- 定常負荷が増えコールドスタートが問題化したら **ECS Fargate** へ移行（判断は PM）。
-- 想定ベースライン: 現状の利用規模なら **概ね月 $5–15**（休止活用時はさらに低減）。Cognito/Lambda/S3 は当初ほぼ無料枠内。
-- ※ インフラ／認証方式の確定はシステム単位で PM 承認のうえ決定。判断に迷う場合はオーナーへエスカレーション。
+| レイヤ | 標準（コスト最適）| 理由 / 備考 |
+|--------|------------------|------------|
+| **認証** | **Azure Entra ID** | 店舗ユーザー・管理者を AppRoles（`admin`/`store`/`manager`）で分類。DEV は無料。PRD は Entra ID P1（条件付きアクセス・パスキー対応予定）。 |
+| **フロント配信** | **Azure Static Web Apps（Free / Standard）** | React SPA を同一オリジン `/`（ポータル）+ `/invoice-search/*` で配信。カスタムドメイン・https 無料。キャッシュ最小化で動的応答に対応。 |
+| **バックエンド実行** | **Azure Container Apps** | FastAPI を Docker コンテナ化。scale-to-zero（スケール最小 0）で無使用時課金ゼロ。初回リクエスト立ち上げ〜5 秒程度（業務用途で許容）。 |
+| **コンテナレジストリ** | **Azure Container Registry（Basic）** | イメージ保管・ビルド。DEV 無料枠内。 |
+| **DB** | **PostgreSQL Flexible Server**（将来） / **当面は Container Apps 内メモリ** | 当面は実装簡素化のため、FastAPI の起動時にテストデータをメモリ上に展開（本番向けでない）。本格運用時は PostgreSQL Flexible Server（定常低負荷 `Standard_B1s` 〜 月額約 $8）を VNet 外から Private Endpoint で接続。VNET/NAT 不要。 |
+| **ログ・監視** | **Log Analytics（DEV 無料枠）** | 30 日保持。Container Apps / Static Web Apps のログを集約。 |
+| **ファイルストレージ** | **Azure Storage / Blob**（当面未使用） | 必要に応じて採用（請求書 PDF 等）。 |
+| **IaC** | **Bicep（ARM Template 簡潔版）** | リソースをコード管理。デプロイ手順は [`docs/runbooks/azure-deployment.md`](docs/runbooks/azure-deployment.md)。 |
 
-> 既存 `Invoice-Search` は旧スタック（React18 + antd + MUI / Azure）。**新標準への段階移行対象**（`docs/DEVELOPMENT_WORKFLOW.md` 参照）。
+**コスト戦略**:
+- **DEV 無料枠活用**: Static Web Apps Free（50 GB/月 bandwidth）+ Container Apps（180 h/月 vCore）+ Entra ID + Log Analytics 30 日 = 実質課金ゼロ。
+- **PostgreSQL**: 将来定常負荷時のみ `Standard_B1s`（月額約 $8）を起動。当面未構築。
+- **ストレージ**: Blob Storage は課金開始前に確認（1 GB/月程度なら無料枠内）。
+- **Front Door / Private Link**: PRD 環境で必要（別途 Entra ID P1 ライセンス要）。当面 DEV のみで運用。
+- **想定ベースライン（DEV）**: 月額 **0–3 USD**（ほぼ無料枠）。PRD 移行時は別途見積り。
+- ※ インフラ方式の確定はシステム単位で PM 承認のうえ決定。判断に迷う場合はオーナーへエスカレーション。
+
+> 検証環境: 現在の DEV は **個人テナント（kenta.ishii1996@outlook.jp）使い捨て**。本番用 DEV/PRD は後日別テナントで構築（予定は #68）。
 
 ---
 
