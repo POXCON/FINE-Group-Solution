@@ -1,8 +1,36 @@
+import { Navigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LoginForm } from "./LoginForm";
+import { useAuth } from "../hooks/useAuthContext";
+
+interface LocationState {
+  from?: { pathname: string };
+}
 
 export function LoginPage(): React.JSX.Element {
   const { t } = useTranslation();
+  const { user, isInitializing } = useAuth();
+  const location = useLocation();
+
+  // 認証状態の確定前はローディングを表示（ちらつき・誤判定を防ぐ）。
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-base-200">
+        <span
+          className="loading loading-spinner loading-lg"
+          aria-label={t("common.loading")}
+        />
+      </div>
+    );
+  }
+
+  // 認証済みなら、loginRedirect の復帰でこの画面に戻ってもループさせず、
+  // 元の遷移元（無ければポータル "/"）へ即時転送する。
+  if (user) {
+    const state = location.state as LocationState | null;
+    const redirectTo = state?.from?.pathname ?? "/";
+    return <Navigate to={redirectTo} replace />;
+  }
 
   return (
     <div className="flex min-h-screen bg-base-200">
