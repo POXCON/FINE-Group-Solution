@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createMockAuthClient } from "./mockAuthClient";
-import { ADMIN_GROUP } from "../lib/roles";
+import { ROLE_ADMIN } from "../lib/roles";
 
 const STORAGE_KEY = "fine-portal.mock-auth-user";
 
@@ -20,16 +20,16 @@ describe("createMockAuthClient", () => {
         password: "password123",
         rememberMe: false,
       });
-      expect(user).toEqual({ email: "test@example.com", groups: [] });
+      expect(user).toEqual({ email: "test@example.com", roles: [] });
     });
 
-    it("grants fine-admin group when email local part contains 'admin'", async () => {
+    it("grants admin role when email local part contains 'admin'", async () => {
       const user = await client.login({
         email: "admin@example.com",
         password: "password123",
         rememberMe: false,
       });
-      expect(user.groups).toContain(ADMIN_GROUP);
+      expect(user.roles).toContain(ROLE_ADMIN);
     });
 
     it("rejects an invalid email format", async () => {
@@ -85,7 +85,7 @@ describe("createMockAuthClient", () => {
         rememberMe: true,
       });
       const user = await client.getCurrentUser();
-      expect(user).toEqual({ email: "test@example.com", groups: [] });
+      expect(user).toEqual({ email: "test@example.com", roles: [] });
     });
 
     it("returns the user after a session-only login", async () => {

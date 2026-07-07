@@ -51,7 +51,7 @@ describe("ProtectedRoute", () => {
   it("renders protected content when the user is authenticated", () => {
     renderWithRoute(
       makeAuthContext({
-        user: { email: "user@test.com", groups: [] },
+        user: { email: "user@test.com", roles: [] },
         isInitializing: false,
       }),
     );

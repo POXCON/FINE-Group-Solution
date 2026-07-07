@@ -32,5 +32,8 @@ tailwind.config.d.ts
 *.sw?
 
 .env
-.env.development
 .env.production
+.env.local
+# .env.development is tracked on purpose: it holds only NON-secret Entra SPA values
+# (public client / no secret). Real secrets belong in .env / .env.production (ignored).
+!.env.development

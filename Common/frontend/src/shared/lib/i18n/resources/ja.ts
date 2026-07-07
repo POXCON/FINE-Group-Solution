@@ -25,9 +25,11 @@ export const ja: { translation: TranslationResource } = {
       password: "パスワード",
       rememberMe: "ログイン情報を記憶する",
       signIn: "ログイン",
+      signInWithMicrosoft: "Microsoft でサインイン",
       signingIn: "ログイン中...",
       invalidCredentials: "メールアドレスまたはパスワードが正しくありません。",
-      mockModeNotice: "Cognito が未設定のため、開発用モック認証を使用しています。",
+      mockModeNotice:
+        "Microsoft Entra ID が未設定のため、開発用モック認証を使用しています。",
     },
 
     portal: {

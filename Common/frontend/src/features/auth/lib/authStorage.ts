@@ -4,10 +4,10 @@
  * - ON  : localStorage（永続。ブラウザを閉じても保持）
  * - OFF : sessionStorage（ブラウザ／タブを閉じると消去）
  *
- * Cognito は `CognitoUserPool({ Storage })` で渡されたストレージにトークンを保存する。
- * ログイン時に選択したストレージで pool を再構築し、`getCurrentUser` / `getToken` も
- * 同じストレージ選択を尊重する必要がある。そのため preference 自体は localStorage に
- * 保持し、アプリ初期化時にも同じストレージを再現できるようにする。
+ * MSAL は `PublicClientApplication` 構築時の `cache.cacheLocation` で決めたストレージへ
+ * トークン／アカウントを保存する。cacheLocation は構築後に変更できないため、選択した
+ * ストレージで PCA を（必要に応じて）再生成する。そのため preference 自体は localStorage
+ * に保持し、アプリ初期化時にも同じ cacheLocation を再現できるようにする。
  */
 
 export type StorageKind = "local" | "session";

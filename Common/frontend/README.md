@@ -10,7 +10,7 @@ Vite + React + TypeScript(strict) + TailwindCSS + daisyUI。FINE デザインシ
 
 ```bash
 npm install
-cp .env.example .env   # Cognito 値を設定。未設定ならモック認証で起動。
+cp .env.example .env   # Entra (Azure) 値を設定。未設定ならモック認証で起動。
 npm run dev
 ```
 
@@ -25,7 +25,8 @@ npm run dev
 
 ## 認証
 
-- Amazon Cognito（共有プール）。env 未設定時はモック認証へフォールバック。
+- Microsoft Entra ID（MSAL / `@azure/msal-browser` + `@azure/msal-react`）。`loginRedirect` / `logoutRedirect` 方式。
+  env（`VITE_AZURE_*`）未設定時はモック認証へフォールバック。
 - 「ログイン情報を記憶する」トグル: ON=localStorage（永続）/ OFF=sessionStorage（ブラウザ閉で消去）。
-  Cognito の `CognitoUserPool({ Storage })` を切り替えて実装。
-- ロール判定: ID トークンの `cognito:groups` に `fine-admin` を含めば管理者。
+  MSAL の `cacheLocation` を切り替えて実装（切替時は `PublicClientApplication` を再生成）。
+- ロール判定: ID トークンの `roles` クレームに `admin` を含めば管理者（`store` / `manager` も定数化）。
