@@ -1,16 +1,17 @@
 """Microsoft Entra ID JWT authentication dependency.
 
 Verifies access tokens issued by Microsoft Entra ID (v2 endpoint) using
-the tenant's JWKS document. When `AUTH_DISABLED=true` (the default for
-local/dev environments where Entra infra is not yet wired up), verification
-is bypassed and an anonymous dev user is returned.
+the tenant's JWKS document, retrieved over TLS. When `AUTH_DISABLED=true`
+(the default for local/dev environments where Entra infra is not yet wired
+up), verification is bypassed and an anonymous dev user is returned.
 
-Verification steps:
+Token verification is delegated to PyJWT (`pyjwt[crypto]`), a maintained,
+timezone-aware library. Verification steps:
   1. Signature: RS256 against the Entra JWKS key selected by `kid`
      (JWKS is cached with a TTL, not fetched on every request).
   2. `iss` must equal the configured issuer.
   3. `aud` must be one of the allowed audiences (`api://<appId>` or `<appId>`).
-  4. `exp` / `nbf` are validated by the JWT library.
+  4. `exp` / `nbf` are validated by PyJWT (`exp` is required).
   5. Authorization: `roles` must contain `REQUIRED_APP_ROLE`, else 403.
 Invalid/missing tokens yield 401; missing role yields 403.
 """
@@ -22,10 +23,11 @@ from dataclasses import dataclass
 from typing import Any
 
 import httpx
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import jwt
-from jose.exceptions import JOSEError
+from jwt import PyJWK
+from jwt.exceptions import PyJWTError
 
 from app.core.config import Settings, get_settings
 from app.core.logging_config import get_logger
@@ -35,6 +37,7 @@ logger = get_logger(__name__)
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 _DEV_USER_ID = "dev-user"
+_ALGORITHMS = ["RS256"]
 
 
 @dataclass(frozen=True)
@@ -93,53 +96,50 @@ def _find_signing_key(jwks: dict[str, Any], kid: str) -> dict[str, Any] | None:
     return None
 
 
-async def _resolve_signing_key(token: str, settings: Settings) -> dict[str, Any]:
+def _unauthorized() -> HTTPException:
+    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+async def _resolve_signing_key(token: str, settings: Settings) -> PyJWK:
     try:
         unverified_header = jwt.get_unverified_header(token)
-    except JOSEError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        ) from exc
+    except PyJWTError as exc:
+        raise _unauthorized() from exc
 
     kid = unverified_header.get("kid")
     jwks = await _get_jwks_client(settings).get_keys()
-    signing_key = _find_signing_key(jwks, kid) if kid else None
-    if signing_key is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    return signing_key
+    key_dict = _find_signing_key(jwks, kid) if kid else None
+    if key_dict is None:
+        raise _unauthorized()
+
+    try:
+        return PyJWK.from_dict(key_dict)
+    except (PyJWTError, ValueError) as exc:
+        # Corrupt key material (e.g. non-base64 modulus) surfaces as a
+        # binascii.Error/ValueError; treat any unusable key as unverifiable.
+        raise _unauthorized() from exc
 
 
-def _decode_claims(token: str, signing_key: dict[str, Any], settings: Settings) -> dict[str, Any]:
-    """Verify signature, issuer, expiry/nbf, and audience.
+def _decode_claims(token: str, signing_key: PyJWK, settings: Settings) -> dict[str, Any]:
+    """Verify signature, issuer, audience, and expiry/nbf via PyJWT.
 
-    Audience is checked manually so that both `api://<appId>` and the bare
-    `<appId>` forms are accepted.
+    Passing the allowed audiences as a list lets PyJWT accept either the
+    `api://<appId>` or the bare `<appId>` form natively.
     """
+    audiences = list(settings.allowed_audiences)
     try:
         claims: dict[str, Any] = jwt.decode(
             token,
-            signing_key,
-            algorithms=["RS256"],
+            key=signing_key.key,
+            algorithms=_ALGORITHMS,
+            audience=audiences or None,
             issuer=settings.azure_issuer,
-            options={"verify_aud": False},
+            options={"verify_aud": bool(audiences), "require": ["exp"]},
         )
-    except JOSEError as exc:
+    except PyJWTError as exc:
         logger.warning("JWT verification failed", extra={"extra_fields": {"error": str(exc)}})
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        ) from exc
-
-    _enforce_audience(claims, settings)
+        raise _unauthorized() from exc
     return claims
-
-
-def _enforce_audience(claims: dict[str, Any], settings: Settings) -> None:
-    allowed = settings.allowed_audiences
-    if not allowed:
-        return
-    if str(claims.get("aud", "")) not in allowed:
-        logger.warning("JWT audience mismatch")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 
 def _extract_roles(claims: dict[str, Any]) -> tuple[str, ...]:
