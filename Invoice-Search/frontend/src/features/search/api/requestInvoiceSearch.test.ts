@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { requestInvoiceSearch } from "./requestInvoiceSearch";
+import { authClient } from "@/features/auth/api/authClient";
 
 const MOCK_BASE_URL = "http://api.example.com";
 
 function okJson(body: unknown) {
   return { ok: true, json: () => Promise.resolve(body) };
+}
+
+function headersFromLastCall(): Record<string, string> {
+  const callArgs = vi.mocked(global.fetch).mock.calls[0];
+  return (callArgs[1]?.headers ?? {}) as Record<string, string>;
 }
 
 describe("requestInvoiceSearch", () => {
@@ -83,6 +89,24 @@ describe("requestInvoiceSearch", () => {
     await expect(
       requestInvoiceSearch({ invoiceNumbers: ["T1234567890123"] }),
     ).rejects.toThrow("Invoice search request failed with status 500");
+  });
+
+  it("attaches the access token as an Authorization: Bearer header", async () => {
+    vi.spyOn(authClient, "getToken").mockResolvedValue("access-token-xyz");
+    global.fetch = vi.fn().mockResolvedValue(okJson({ results: [] }));
+
+    await requestInvoiceSearch({ invoiceNumbers: ["T1234567890123"] });
+
+    expect(headersFromLastCall().Authorization).toBe("Bearer access-token-xyz");
+  });
+
+  it("omits the Authorization header when no token is available (mock mode)", async () => {
+    vi.spyOn(authClient, "getToken").mockResolvedValue(null);
+    global.fetch = vi.fn().mockResolvedValue(okJson({ results: [] }));
+
+    await requestInvoiceSearch({ invoiceNumbers: ["T1234567890123"] });
+
+    expect(headersFromLastCall().Authorization).toBeUndefined();
   });
 
   it("throws when the response is not the { results } envelope", async () => {

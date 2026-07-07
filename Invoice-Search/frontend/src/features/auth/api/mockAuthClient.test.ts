@@ -12,19 +12,19 @@ describe("createMockAuthClient", () => {
   describe("login", () => {
     it("resolves with user for valid credentials", async () => {
       const user = await client.login({ email: "test@example.com", password: "password123" });
-      expect(user).toEqual({ email: "test@example.com", groups: ["fine-admin"] });
+      expect(user).toEqual({ email: "test@example.com", roles: ["admin"] });
     });
 
-    it("includes fine-admin group so dev/E2E users pass the role guard", async () => {
+    it("includes the admin role so dev/E2E users pass the role guard", async () => {
       const user = await client.login({ email: "test@example.com", password: "password123" });
-      expect(user.groups).toContain("fine-admin");
+      expect(user.roles).toContain("admin");
     });
 
-    it("persists groups in sessionStorage", async () => {
+    it("persists roles in sessionStorage", async () => {
       await client.login({ email: "test@example.com", password: "password123" });
       const stored = sessionStorage.getItem("invoice-search.mock-auth-user");
       expect(stored).not.toBeNull();
-      expect(JSON.parse(stored ?? "{}").groups).toEqual(["fine-admin"]);
+      expect(JSON.parse(stored ?? "{}").roles).toEqual(["admin"]);
     });
 
     it("rejects for invalid email format", async () => {
@@ -65,23 +65,23 @@ describe("createMockAuthClient", () => {
       expect(user).toBeNull();
     });
 
-    it("returns user with groups after login", async () => {
+    it("returns user with roles after login", async () => {
       await client.login({ email: "test@example.com", password: "password123" });
       const user = await client.getCurrentUser();
-      expect(user).toEqual({ email: "test@example.com", groups: ["fine-admin"] });
+      expect(user).toEqual({ email: "test@example.com", roles: ["admin"] });
     });
 
-    it("restores legacy stored users (without groups) as fine-admin", async () => {
+    it("restores legacy stored users (without roles) as admin", async () => {
       sessionStorage.setItem(
         "invoice-search.mock-auth-user",
         JSON.stringify({ email: "legacy@example.com" }),
       );
       const user = await client.getCurrentUser();
-      expect(user).toEqual({ email: "legacy@example.com", groups: ["fine-admin"] });
+      expect(user).toEqual({ email: "legacy@example.com", roles: ["admin"] });
     });
 
     it("returns null when stored JSON has no email", async () => {
-      sessionStorage.setItem("invoice-search.mock-auth-user", JSON.stringify({ groups: [] }));
+      sessionStorage.setItem("invoice-search.mock-auth-user", JSON.stringify({ roles: [] }));
       const user = await client.getCurrentUser();
       expect(user).toBeNull();
     });
@@ -97,6 +97,13 @@ describe("createMockAuthClient", () => {
       sessionStorage.setItem("invoice-search.mock-auth-user", "invalid-json");
       const user = await client.getCurrentUser();
       expect(user).toBeNull();
+    });
+  });
+
+  describe("getToken", () => {
+    it("returns null (mock mode issues no bearer token)", async () => {
+      await client.login({ email: "test@example.com", password: "password123" });
+      expect(await client.getToken()).toBeNull();
     });
   });
 });

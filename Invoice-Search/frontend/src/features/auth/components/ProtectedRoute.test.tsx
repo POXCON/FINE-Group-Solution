@@ -70,36 +70,36 @@ describe("ProtectedRoute", () => {
     expect(window.location.href).toBe(originalHref);
   });
 
-  it("renders protected content when user is an authenticated fine-admin", () => {
+  it("renders protected content when user is an authenticated admin", () => {
     const auth = makeAuthContext({
-      user: { email: "admin@test.com", groups: ["fine-admin"] },
+      user: { email: "admin@test.com", roles: ["admin"] },
       isInitializing: false,
     });
     renderWithRoute(auth);
     expect(screen.getByText("Protected Content")).toBeDefined();
   });
 
-  it("does not redirect when user is an authenticated fine-admin", () => {
+  it("does not redirect when user is an authenticated admin", () => {
     const auth = makeAuthContext({
-      user: { email: "admin@test.com", groups: ["fine-admin"] },
+      user: { email: "admin@test.com", roles: ["admin"] },
       isInitializing: false,
     });
     renderWithRoute(auth);
     expect(window.location.href).toBe(originalHref);
   });
 
-  it("redirects to the portal (/) when authenticated but not a fine-admin", () => {
+  it("redirects to the portal (/) when authenticated but not an admin", () => {
     const auth = makeAuthContext({
-      user: { email: "staff@test.com", groups: ["store-staff"] },
+      user: { email: "staff@test.com", roles: ["store"] },
       isInitializing: false,
     });
     renderWithRoute(auth);
     expect(window.location.href).toBe("/");
   });
 
-  it("redirects to the portal (/) when authenticated user has empty groups", () => {
+  it("redirects to the portal (/) when authenticated user has empty roles", () => {
     const auth = makeAuthContext({
-      user: { email: "nobody@test.com", groups: [] },
+      user: { email: "nobody@test.com", roles: [] },
       isInitializing: false,
     });
     renderWithRoute(auth);
@@ -108,7 +108,7 @@ describe("ProtectedRoute", () => {
 
   it("does not render protected content for a non-admin user", () => {
     const auth = makeAuthContext({
-      user: { email: "staff@test.com", groups: ["store-staff"] },
+      user: { email: "staff@test.com", roles: ["store"] },
       isInitializing: false,
     });
     renderWithRoute(auth);

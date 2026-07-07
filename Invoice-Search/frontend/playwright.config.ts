@@ -46,7 +46,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 60000,
     env: {
-      // Cognito 未設定 → mockAuthClient が使われる
+      // Entra ID(MSAL) 未設定 → mockAuthClient が使われる
       VITE_API_BASE_URL: "http://127.0.0.1:5173",
     },
   },

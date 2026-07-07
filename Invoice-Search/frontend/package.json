@@ -14,8 +14,9 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@azure/msal-browser": "^5.16.0",
+    "@azure/msal-react": "^5.5.1",
     "@tanstack/react-query": "^5.62.7",
-    "amazon-cognito-identity-js": "^6.3.12",
     "i18next": "^23.16.8",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",

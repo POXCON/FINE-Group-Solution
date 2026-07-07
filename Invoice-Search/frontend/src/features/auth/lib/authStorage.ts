@@ -1,10 +1,10 @@
 /**
- * Cognito セッション共有（SSO）のためのストレージ選択ロジック。
+ * MSAL キャッシュ共有（SSO）のためのストレージ選択ロジック。
  *
  * ポータル（Common）がログイン時に選んだ「ログイン情報を記憶する」設定を
  * `fine-portal.remember`（localStorage）に保持しており、Invoice-Search は
- * 同一 clientId・同一ユーザープールのため、同じストレージを参照すれば
- * ポータルが作成したセッションをそのまま読み取れる。
+ * 同一 clientId・同一オリジンのため、MSAL の `cacheLocation` を同じストレージに
+ * 合わせればポータルが確立したアカウント／トークンを共有できる。
  *
  * - "local"   : localStorage（永続。ブラウザを閉じても保持）
  * - "session" : sessionStorage（ブラウザ／タブを閉じると消去）
