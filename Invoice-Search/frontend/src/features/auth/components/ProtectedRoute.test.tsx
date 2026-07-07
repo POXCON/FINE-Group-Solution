@@ -97,6 +97,15 @@ describe("ProtectedRoute", () => {
     expect(window.location.href).toBe("/");
   });
 
+  it("redirects to the portal (/) when authenticated as a manager (non-admin)", () => {
+    const auth = makeAuthContext({
+      user: { email: "manager@test.com", roles: ["manager"] },
+      isInitializing: false,
+    });
+    renderWithRoute(auth);
+    expect(window.location.href).toBe("/");
+  });
+
   it("redirects to the portal (/) when authenticated user has empty roles", () => {
     const auth = makeAuthContext({
       user: { email: "nobody@test.com", roles: [] },

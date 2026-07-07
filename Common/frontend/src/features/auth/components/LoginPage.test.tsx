@@ -57,6 +57,19 @@ describe("LoginPage", () => {
     expect(screen.getByText("Portal Home")).toBeDefined();
   });
 
+  // #91 回帰: SSO 復帰でロール保持済みユーザーが /login に着地しても
+  // ループさせず、即座にポータルへ転送する（loginRedirect ループの再発防止）。
+  it("redirects an authenticated role-bearing user landing on /login (no loop)", () => {
+    renderLogin(
+      makeAuthContext({
+        user: { email: "store@test.com", roles: ["store"] },
+        isInitializing: false,
+      }),
+    );
+    expect(screen.getByText("Portal Home")).toBeDefined();
+    expect(screen.queryByText("auth.loginTitle")).toBeNull();
+  });
+
   it("redirects an authenticated user back to the originating route", () => {
     renderLogin(
       makeAuthContext({

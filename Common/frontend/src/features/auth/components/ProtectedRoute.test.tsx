@@ -57,4 +57,19 @@ describe("ProtectedRoute", () => {
     );
     expect(screen.getByText("Protected Content")).toBeDefined();
   });
+
+  // ポータルは全ロール共通の入口。admin 以外（store / manager）でも認証済みなら
+  // 到達でき、ロール別のカード表示で出し分ける設計（過剰制限しない）。
+  it.each([["store"], ["manager"], ["admin"]])(
+    "renders the portal for any authenticated role: %s",
+    (role) => {
+      renderWithRoute(
+        makeAuthContext({
+          user: { email: `${role}@test.com`, roles: [role] },
+          isInitializing: false,
+        }),
+      );
+      expect(screen.getByText("Protected Content")).toBeDefined();
+    },
+  );
 });

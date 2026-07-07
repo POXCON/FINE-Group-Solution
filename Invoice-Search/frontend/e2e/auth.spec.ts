@@ -60,6 +60,16 @@ test.describe("Authentication flow", () => {
     await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });
 
+  test("認証済みでも manager ロール（admin 非保持）はポータル（/）へリダイレクトされる", async ({
+    page,
+  }) => {
+    await stubPortalRoot(page);
+    await seedNonAdminSession(page, "manager@example.com", ["manager"]);
+    await page.goto(SEARCH_PATH);
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15000 });
+    await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
+  });
+
   test("モックセッション投入後は保護ルートに入れる", async ({ page }) => {
     await loginWithMock(page);
     await expect(page).toHaveURL(/\/invoice-search\/search/);
