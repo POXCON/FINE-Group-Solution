@@ -30,10 +30,6 @@
         }
       })();
     </script>
-    <!-- Polyfill: amazon-cognito-identity-js が参照する Node.js global を補完 -->
-    <script>
-      window.global = window.globalThis ?? window;
-    </script>
   </head>
   <body>
     <div id="root"></div>
