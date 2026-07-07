@@ -22,7 +22,7 @@ export async function requestInvoiceSearch({
   invoiceNumbers,
   signal,
 }: InvoiceSearchRequestOptions): Promise<InvoiceApiResult[]> {
-  // 未設定なら同一オリジン相対パス（CloudFront 経由で API Gateway へ）。
+  // 未設定なら同一オリジン相対パス（Static Web Apps 経由で Azure Container Apps(API) へ）。
   const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };

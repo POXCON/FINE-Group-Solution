@@ -1,7 +1,7 @@
 /**
  * インボイス番号検索アプリの遷移先（env 未設定時のフォールバック）。
  *
- * 同一オリジン統合（1 CloudFront）後は `/invoice-search/` サブパスで配信されるため、
+ * 同一オリジン統合（1 Static Web Apps）後は `/invoice-search/` サブパスで配信されるため、
  * 既定値は同一オリジン相対パスとする。外部 URL を使う場合は
  * `VITE_INVOICE_SEARCH_URL` で上書きできる。
  */
