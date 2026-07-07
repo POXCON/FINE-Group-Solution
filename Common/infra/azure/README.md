@@ -138,3 +138,106 @@ az group delete --name rg-fine-verify-dev --yes --no-wait
 Azure ポータルの Resource Group 一覧 / 各リソースの「タグ」で以下を確認できる:
 
 `Project=FINE-Group-Solution` / `Environment=verify-dev` / `System=platform` / `ManagedBy=bicep`
+
+---
+
+## フロント2アプリの SWA 配信(同一オリジン・パス分割 / #76)
+
+移行済みの2フロント(Common ポータル / Invoice-Search)を、既存 `swa-fine-web`(Free)へ
+**同一オリジン・パス分割**で配信する。
+
+```
+https://<swa-defaultHostname>/                 → Common ポータル(base "/")
+https://<swa-defaultHostname>/invoice-search/  → Invoice-Search(base "/invoice-search/")
+```
+
+### 構成ファイル
+
+| ファイル | 役割 |
+|----------|------|
+| `staticwebapp.config.json` | SWA のルーティング(下記)。配信ディレクトリ直下に配置される。 |
+| `deploy-swa.sh` | ビルド→統合→`swa deploy` を一括実行するスクリプト。 |
+| `swa-dist/`(gitignore) | 統合された配信ディレクトリ(派生物・非コミット)。 |
+
+### staticwebapp.config.json の要点
+
+- `/invoice-search/assets/*` と拡張子付きファイル(`*.{js,css,ico,png,…}`)は
+  **rewrite せず実体ファイルを配信**(ルール評価は最初の一致で停止するため、
+  後続の catch-all より先に置く。これが無いと JS/CSS が index.html に化けてアプリが壊れる)。
+- `/invoice-search/*`(上記以外)は `/invoice-search/index.html` へ **rewrite**
+  → Invoice-Search のクライアントルーティング(`/search` `/consistency-check`)を維持。
+- ルートは `navigationFallback` で `/index.html` へフォールバック。
+  `exclude` に `/invoice-search/*`・`/assets/*`・静的アセット拡張子を指定し、
+  サブアプリとアセットを巻き込まない。
+- **API(`/api/*`)について**: Free SWA は Container Apps バックエンドへの
+  リンク(プロキシ)不可。フロントは API FQDN を**直接**呼ぶ(=クロスオリジン)。
+  そのため **CORS 対応は #75 で backend(Container App)側に実装予定**。
+  本 Issue #76 時点では API はプレースホルダのため、Invoice-Search の検索実行は
+  失敗して良い(ログイン/ロールガード/画面遷移の実証が目的)。
+
+### デプロイ手順
+
+前提: `az login` 済み・対象サブスクリプション選択済み。
+
+```bash
+az account set --subscription <SUBSCRIPTION_ID>
+
+# ビルド→統合→デプロイを一括実行(既定値=検証環境)
+Common/infra/azure/deploy-swa.sh
+```
+
+スクリプトは以下を行う:
+
+1. 各 frontend の `.env.production`(非秘密の `VITE_AZURE_*` / API FQDN)を生成。
+2. `Common/frontend`(base `/`)と `Invoice-Search/frontend`(base `/invoice-search/`)をビルド。
+3. `swa-dist/` へ統合(ルート=ポータル / `invoice-search/`=検索アプリ / `staticwebapp.config.json`)。
+4. デプロイトークンを `az staticwebapp secrets list` で取得し、
+   `npx @azure/static-web-apps-cli deploy` で `production` へデプロイ。
+
+手動で行う場合の要点:
+
+```bash
+TOKEN=$(az staticwebapp secrets list --name swa-fine-web \
+  --resource-group rg-fine-verify-dev --query "properties.apiKey" -o tsv)
+npx -y @azure/static-web-apps-cli deploy Common/infra/azure/swa-dist \
+  --deployment-token "$TOKEN" --env production
+```
+
+### Entra リダイレクト URI の追加(初回のみ)
+
+SWA の `defaultHostname` を取得し、そのオリジンをアプリ登録の **SPA redirectUris** に追加する
+(既存の localhost は残す)。ポータルは `redirectUri = window.location.origin`、
+Invoice-Search は `origin + /invoice-search/` を使うため **両方**を登録する。
+
+```bash
+HOSTNAME=$(az staticwebapp show --name swa-fine-web \
+  --resource-group rg-fine-verify-dev --query "defaultHostname" -o tsv)
+OBJECT_ID=$(az ad app show --id 76537176-b582-4055-8b3e-cf89e84e1c08 --query id -o tsv)
+
+# spa.redirectUris は既存分も含めた完全な配列で PATCH する(置換されるため)
+az rest --method PATCH \
+  --url "https://graph.microsoft.com/v1.0/applications/${OBJECT_ID}" \
+  --headers "Content-Type=application/json" \
+  --body '{"spa":{"redirectUris":[
+    "http://localhost:4280/","http://localhost:5173/",
+    "https://'"${HOSTNAME}"'/","https://'"${HOSTNAME}"'/invoice-search/"
+  ]}}'
+```
+
+> 検証環境(#76)での実績値: `defaultHostname = nice-water-054d5bc00.7.azurestaticapps.net`
+
+### 動作確認
+
+```bash
+BASE=https://nice-water-054d5bc00.7.azurestaticapps.net
+curl -I "$BASE/"                                   # ポータル(200 / text/html)
+curl -I "$BASE/invoice-search/"                    # 検索アプリ(200 / text/html)
+curl -I "$BASE/invoice-search/assets/<hash>.js"    # 200 / text/javascript(HTML に化けないこと)
+```
+
+手動ログイン確認(対話):
+
+1. ブラウザで `https://<hostname>/` を開く → 未認証なら `login.microsoftonline.com` へ遷移。
+2. `kenta.ishii1996@outlook.jp`(admin ロール割当済み)でサインイン → ポータルへ戻る。
+3. 「インボイス番号検索」カード → `/invoice-search/` へ遷移し、SSO でログイン状態が共有される。
+4. 検索実行は #75(実 API + CORS)まで失敗して良い。

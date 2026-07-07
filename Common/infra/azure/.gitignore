@@ -1,0 +1,4 @@
+# Assembled SWA deployment output (portal + invoice-search). Derived artifact.
+swa-dist/
+# Deploy logs
+*.log
