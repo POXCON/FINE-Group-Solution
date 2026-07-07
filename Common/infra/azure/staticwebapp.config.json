@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "routes": [
+    {
+      "route": "/invoice-search",
+      "redirect": "/invoice-search/",
+      "statusCode": 301
+    },
+    {
+      "route": "/invoice-search/assets/*"
+    },
+    {
+      "route": "/invoice-search/*.{js,css,ico,png,jpg,jpeg,gif,svg,webp,json,txt,xml,map,woff,woff2,ttf,eot,webmanifest,config}"
+    },
+    {
+      "route": "/invoice-search/*",
+      "rewrite": "/invoice-search/index.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/invoice-search/*",
+      "/assets/*",
+      "/*.{js,css,png,jpg,jpeg,gif,svg,ico,webp,woff,woff2,ttf,eot,json,map,txt,xml,webmanifest}"
+    ]
+  }
+}
