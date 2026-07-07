@@ -63,9 +63,9 @@ module containerRegistry 'modules/container-registry.bicep' = {
   }
 }
 
-// 5) Container App（プレースホルダ / scale-to-zero）
-// 実イメージ（ACR）への差し替え・レジストリ資格情報・env は、秘密を git へ出さない
-// ため CLI（az containerapp update / registry set）で行う。
+// 5) Container App（ACR 実イメージ / scale-to-zero）
+// レジストリ資格情報はモジュール内で listCredentials() により解決し secret 保持
+// （git には出さない）。アプリ固有 env は破壊的上書きを避けるためデプロイ後に CLI 設定。
 module containerApp 'modules/container-app.bicep' = {
   name: 'containerApp'
   scope: rg
@@ -73,6 +73,7 @@ module containerApp 'modules/container-app.bicep' = {
     location: location
     tags: tags
     environmentId: containerAppsEnv.outputs.environmentId
+    acrName: containerRegistry.outputs.registryName
   }
 }
 
