@@ -50,7 +50,7 @@ test.describe("Authentication flow", () => {
     await expect(page.getByText(PORTAL_MARKER)).toBeVisible();
   });
 
-  test("認証済みでも非 fine-admin（店舗ユーザー）はポータル（/）へリダイレクトされる", async ({
+  test("認証済みでも非管理者（admin ロール非保持の店舗ユーザー）はポータル（/）へリダイレクトされる", async ({
     page,
   }) => {
     await stubPortalRoot(page);

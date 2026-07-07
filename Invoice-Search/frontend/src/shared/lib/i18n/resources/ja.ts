@@ -95,7 +95,7 @@ export const ja: { translation: TranslationResource } = {
       signIn: "ログイン",
       signingIn: "ログイン中...",
       invalidCredentials: "メールアドレスまたはパスワードが正しくありません。",
-      mockModeNotice: "Cognito が未設定のため、開発用モック認証を使用しています。",
+      mockModeNotice: "Entra ID が未設定のため、開発用モック認証を使用しています。",
       required: "この項目は必須です。",
       invalidEmail: "有効なメールアドレスを入力してください。",
       passwordTooShort: "パスワードは8文字以上で入力してください。",

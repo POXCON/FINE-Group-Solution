@@ -50,7 +50,7 @@ function renderLayout(auth: AuthContextValue, theme: ThemeContextValue) {
 }
 
 describe("AppLayout", () => {
-  const adminUser: AuthUser = { email: "admin@example.com", groups: ["fine-admin"] };
+  const adminUser: AuthUser = { email: "admin@example.com", roles: ["admin"] };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -86,7 +86,7 @@ describe("AppLayout", () => {
   });
 
   it("prefers the user name over the email local part", () => {
-    const named: AuthUser = { email: "u@example.com", name: "山田 太郎", groups: [] };
+    const named: AuthUser = { email: "u@example.com", name: "山田 太郎", roles: [] };
     renderLayout(makeAuth(named), makeTheme());
     expect(screen.getByText("山田 太郎")).toBeDefined();
   });

@@ -6,10 +6,6 @@ export default defineConfig({
   // 同一オリジン統合: Invoice-Search は /invoice-search/ サブパスで配信する。
   base: "/invoice-search/",
   plugins: [react()],
-  // amazon-cognito-identity-js が参照する Node.js グローバル `global` をポリフィル
-  define: {
-    global: "globalThis",
-  },
   resolve: {
     alias: {
       "@": "/src",
@@ -40,7 +36,6 @@ export default defineConfig({
         "src/shared/lib/i18n/",
         "src/shared/lib/queryClient.ts",
         "src/features/auth/api/authClient.ts",
-        "src/features/auth/api/cognitoAuthClient.ts",
         "src/features/auth/components/AuthProvider.tsx",
         "src/features/auth/types/index.ts",
         "src/features/consistency-check/hooks/",

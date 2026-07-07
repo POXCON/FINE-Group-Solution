@@ -12,10 +12,11 @@ interface InvoiceSearchRequestOptions {
 
 /**
  * Calls the Invoice Search backend (FastAPI `POST /api/invoice-search`) to
- * resolve invoice numbers against the public registry. The Cognito ID token
- * (when authenticated) is attached as a Bearer token; in mock-auth mode no
- * token is sent and the backend runs with AUTH_DISABLED. The response shape
- * is validated with Zod so unexpected payloads fail fast.
+ * resolve invoice numbers against the public registry. The Entra ID access
+ * token (scope `access_as_user`, when authenticated) is attached as a Bearer
+ * token; in mock-auth mode no token is sent and the backend runs with
+ * AUTH_DISABLED. The response shape is validated with Zod so unexpected
+ * payloads fail fast.
  */
 export async function requestInvoiceSearch({
   invoiceNumbers,

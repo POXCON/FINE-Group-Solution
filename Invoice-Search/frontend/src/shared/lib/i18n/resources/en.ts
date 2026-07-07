@@ -93,7 +93,7 @@ export const en = {
       signIn: "Sign in",
       signingIn: "Signing in...",
       invalidCredentials: "Invalid email or password.",
-      mockModeNotice: "Cognito is not configured. Using mock authentication for local development.",
+      mockModeNotice: "Entra ID is not configured. Using mock authentication for local development.",
       required: "This field is required.",
       invalidEmail: "Please enter a valid email address.",
       passwordTooShort: "Password must be at least 8 characters.",

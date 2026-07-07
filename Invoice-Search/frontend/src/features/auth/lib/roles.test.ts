@@ -1,51 +1,51 @@
 import { describe, it, expect } from "vitest";
-import { ADMIN_GROUP, isAdmin, normalizeGroups } from "./roles";
+import { ADMIN_ROLE, isAdmin, normalizeRoles } from "./roles";
 import type { AuthUser } from "../types";
 
-function makeUser(groups: readonly string[]): AuthUser {
-  return { email: "user@example.com", groups };
+function makeUser(roles: readonly string[]): AuthUser {
+  return { email: "user@example.com", roles };
 }
 
-describe("normalizeGroups", () => {
+describe("normalizeRoles", () => {
   it("returns string array unchanged", () => {
-    expect(normalizeGroups(["a", "b"])).toEqual(["a", "b"]);
+    expect(normalizeRoles(["a", "b"])).toEqual(["a", "b"]);
   });
 
   it("filters out non-string values from arrays", () => {
-    expect(normalizeGroups(["a", 1, null, "b"])).toEqual(["a", "b"]);
+    expect(normalizeRoles(["a", 1, null, "b"])).toEqual(["a", "b"]);
   });
 
   it("wraps a single non-empty string into an array", () => {
-    expect(normalizeGroups("fine-admin")).toEqual(["fine-admin"]);
+    expect(normalizeRoles("admin")).toEqual(["admin"]);
   });
 
   it("returns empty array for undefined", () => {
-    expect(normalizeGroups(undefined)).toEqual([]);
+    expect(normalizeRoles(undefined)).toEqual([]);
   });
 
   it("returns empty array for empty string", () => {
-    expect(normalizeGroups("")).toEqual([]);
+    expect(normalizeRoles("")).toEqual([]);
   });
 
   it("returns empty array for objects", () => {
-    expect(normalizeGroups({ foo: "bar" })).toEqual([]);
+    expect(normalizeRoles({ foo: "bar" })).toEqual([]);
   });
 });
 
 describe("isAdmin", () => {
-  it("returns true when user is in the fine-admin group", () => {
-    expect(isAdmin(makeUser([ADMIN_GROUP]))).toBe(true);
+  it("returns true when user has the admin role", () => {
+    expect(isAdmin(makeUser([ADMIN_ROLE]))).toBe(true);
   });
 
-  it("returns true when admin group is among others", () => {
-    expect(isAdmin(makeUser(["staff", ADMIN_GROUP]))).toBe(true);
+  it("returns true when admin role is among others", () => {
+    expect(isAdmin(makeUser(["store", ADMIN_ROLE]))).toBe(true);
   });
 
-  it("returns false when user has no admin group", () => {
-    expect(isAdmin(makeUser(["staff"]))).toBe(false);
+  it("returns false when user has no admin role", () => {
+    expect(isAdmin(makeUser(["store"]))).toBe(false);
   });
 
-  it("returns false for empty groups", () => {
+  it("returns false for empty roles", () => {
     expect(isAdmin(makeUser([]))).toBe(false);
   });
 
