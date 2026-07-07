@@ -23,10 +23,11 @@ export const en = {
       password: "Password",
       rememberMe: "Remember my sign-in",
       signIn: "Sign in",
+      signInWithMicrosoft: "Sign in with Microsoft",
       signingIn: "Signing in...",
       invalidCredentials: "Invalid email or password.",
       mockModeNotice:
-        "Cognito is not configured. Using mock authentication for local development.",
+        "Microsoft Entra ID is not configured. Using mock authentication for local development.",
     },
 
     portal: {

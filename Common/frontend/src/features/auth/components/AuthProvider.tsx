@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { authClient } from "../api/authClient";
 import { AuthContext } from "../hooks/useAuthContext";
 import { getErrorMessage } from "@/shared/lib/errors";
-import type { AuthUser, LoginCredentials } from "../types";
+import type { AuthUser, LoginOptions } from "../types";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -35,11 +35,11 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   }, []);
 
   const login = useCallback(
-    async (credentials: LoginCredentials): Promise<void> => {
+    async (options: LoginOptions): Promise<void> => {
       setIsAuthenticating(true);
       setError(null);
       try {
-        const authenticatedUser = await authClient.login(credentials);
+        const authenticatedUser = await authClient.login(options);
         setUser(authenticatedUser);
       } catch (loginError: unknown) {
         setError(getErrorMessage(loginError));

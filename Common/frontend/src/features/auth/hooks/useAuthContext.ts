@@ -1,12 +1,12 @@
 import { createContext, useContext } from "react";
-import type { AuthUser, LoginCredentials } from "../types";
+import type { AuthUser, LoginOptions } from "../types";
 
 export interface AuthContextValue {
   user: AuthUser | null;
   isInitializing: boolean;
   isAuthenticating: boolean;
   error: string | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (options: LoginOptions) => Promise<void>;
   logout: () => Promise<void>;
 }
 

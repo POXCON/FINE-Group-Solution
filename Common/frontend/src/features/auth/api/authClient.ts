@@ -1,20 +1,23 @@
-import { createCognitoAuthClient } from "./cognitoAuthClient";
+import { createMsalAuthClient } from "./msalAuthClient";
 import { createMockAuthClient } from "./mockAuthClient";
+import { msalInstance } from "./msalInstance";
+import { readEntraEnv } from "../lib/msalConfig";
+import { readPreference } from "../lib/authStorage";
 import type { AuthClient } from "../types";
 
 function buildAuthClient(): AuthClient {
-  const userPoolId = import.meta.env.VITE_COGNITO_USER_POOL_ID;
-  const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
-
-  if (userPoolId && clientId) {
-    return createCognitoAuthClient({ userPoolId, clientId });
+  const env = readEntraEnv();
+  if (msalInstance && env) {
+    return createMsalAuthClient({
+      instance: msalInstance,
+      env,
+      initialKind: readPreference(),
+    });
   }
-
+  // Entra 未設定（ローカル／テスト）時はモック認証へフォールバック。
   return createMockAuthClient();
 }
 
-export const isMockAuthMode = (): boolean =>
-  !import.meta.env.VITE_COGNITO_USER_POOL_ID ||
-  !import.meta.env.VITE_COGNITO_CLIENT_ID;
+export const isMockAuthMode = (): boolean => msalInstance === null;
 
 export const authClient: AuthClient = buildAuthClient();
