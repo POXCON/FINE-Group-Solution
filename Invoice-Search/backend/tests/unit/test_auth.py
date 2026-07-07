@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import time
+from typing import Any
 
 import httpx
+import jwt
 import pytest
 import respx
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from jose import jwk, jwt
+from jwt.algorithms import RSAAlgorithm
 
 from app.core.auth import AuthenticatedUser, get_current_user
 from app.core.config import Settings
@@ -40,17 +42,13 @@ async def test_auth_enabled_without_credentials_raises_401(
 
 @pytest.fixture
 def rsa_key_pair() -> tuple[dict, dict]:
-    """Generate an RSA key pair and matching JWK for token signing/verification."""
+    """Generate an RSA key pair and matching public JWK for signing/verification."""
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    pem_private = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
-    public_jwk = jwk.construct(pem_private, algorithm="RS256").to_dict()
+    public_jwk: dict[str, Any] = RSAAlgorithm.to_jwk(private_key.public_key(), as_dict=True)
     public_jwk["kid"] = "test-kid"
     public_jwk["use"] = "sig"
-    return {"pem": pem_private, "kid": "test-kid"}, public_jwk
+    public_jwk["alg"] = "RS256"
+    return {"key": private_key, "kid": "test-kid"}, public_jwk
 
 
 def _setup_entra_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -72,9 +70,10 @@ def _base_claims(settings: Settings) -> dict:
 
 
 def _sign_token(claims: dict, private_info: dict) -> str:
+    private_key: RSAPrivateKey = private_info["key"]
     return jwt.encode(
         claims,
-        private_info["pem"],
+        private_key,
         algorithm="RS256",
         headers={"kid": private_info["kid"]},
     )
@@ -256,6 +255,29 @@ async def test_malformed_token_raises_401(
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="not-a-jwt")
     with pytest.raises(HTTPException) as exc_info:
         await get_current_user(credentials=credentials, settings=settings)
+
+    assert exc_info.value.status_code == 401
+
+
+async def test_malformed_jwk_in_jwks_raises_401(
+    monkeypatch: pytest.MonkeyPatch, rsa_key_pair: tuple[dict, dict]
+) -> None:
+    private_info, _ = rsa_key_pair
+    _setup_entra_env(monkeypatch)
+    settings = Settings()
+
+    # JWKS advertises a key with the right kid but corrupt key material.
+    bad_jwk = {
+        "kty": "RSA",
+        "kid": "test-kid",
+        "use": "sig",
+        "alg": "RS256",
+        "n": "!!!not-base64!!!",
+        "e": "AQAB",
+    }
+    claims = {**_base_claims(settings), "roles": ["admin"]}
+    with pytest.raises(HTTPException) as exc_info:
+        await _call_with_token(_sign_token(claims, private_info), settings, bad_jwk)
 
     assert exc_info.value.status_code == 401
 
