@@ -1,7 +1,7 @@
 // ============================================================================
 // FINE Group Solution — Azure 基盤 IaC (DEV 検証 / 無料枠)
 // スコープ: サブスクリプション（Resource Group を作成し、各モジュールを呼び出す）
-// 参照 Issue: #70
+// 参照 Issue: #70 / #90（fine-grp 命名へ統一・rg-fine-grp-dev へ再プロビジョン）
 // ============================================================================
 targetScope = 'subscription'
 
@@ -15,7 +15,7 @@ param location string = 'japaneast'
 param staticWebAppLocation string = 'eastasia'
 
 @description('Resource Group 名')
-param resourceGroupName string = 'rg-fine-verify-dev'
+param resourceGroupName string = 'rg-fine-grp-dev'
 
 // 全リソース共通タグ
 var tags = {
@@ -53,7 +53,19 @@ module containerAppsEnv 'modules/container-apps-env.bicep' = {
   }
 }
 
-// 4) Container App（プレースホルダ / scale-to-zero）
+// 4) Azure Container Registry（Basic・実イメージ格納先）
+module containerRegistry 'modules/container-registry.bicep' = {
+  name: 'containerRegistry'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+  }
+}
+
+// 5) Container App（プレースホルダ / scale-to-zero）
+// 実イメージ（ACR）への差し替え・レジストリ資格情報・env は、秘密を git へ出さない
+// ため CLI（az containerapp update / registry set）で行う。
 module containerApp 'modules/container-app.bicep' = {
   name: 'containerApp'
   scope: rg
@@ -64,7 +76,7 @@ module containerApp 'modules/container-app.bicep' = {
   }
 }
 
-// 5) Static Web App（Free / eastasia）
+// 6) Static Web App（Free / eastasia）
 module staticWebApp 'modules/static-web-app.bicep' = {
   name: 'staticWebApp'
   scope: rg
@@ -76,6 +88,12 @@ module staticWebApp 'modules/static-web-app.bicep' = {
 
 @description('API (Container App) の外部 Ingress FQDN')
 output apiIngressFqdn string = containerApp.outputs.ingressFqdn
+
+@description('ACR のログインサーバ')
+output acrLoginServer string = containerRegistry.outputs.loginServer
+
+@description('ACR 名')
+output acrName string = containerRegistry.outputs.registryName
 
 @description('Static Web App の defaultHostname')
 output staticWebAppDefaultHostname string = staticWebApp.outputs.defaultHostname

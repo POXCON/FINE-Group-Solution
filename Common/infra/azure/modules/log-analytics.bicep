@@ -9,7 +9,7 @@ param location string
 param tags object
 
 @description('ワークスペース名')
-param workspaceName string = 'log-fine-verify-dev'
+param workspaceName string = 'log-fine-grp-dev'
 
 @description('データ保持日数（無料枠を考慮し最小の 30 日）')
 @minValue(30)
