@@ -241,3 +241,88 @@ curl -I "$BASE/invoice-search/assets/<hash>.js"    # 200 / text/javascript(HTML 
 2. `kenta.ishii1996@outlook.jp`(admin ロール割当済み)でサインイン → ポータルへ戻る。
 3. 「インボイス番号検索」カード → `/invoice-search/` へ遷移し、SSO でログイン状態が共有される。
 4. 検索実行は #75(実 API + CORS)まで失敗して良い。
+
+---
+
+## Invoice-Search backend のコンテナ化＋ Container App デプロイ(#75)
+
+プレースホルダ(`aci-helloworld`)だった `ca-fine-api` を、移行済み FastAPI backend の
+**実イメージ**へ差し替える。ローカル Docker は不要で、`az containerapp up --source` の
+**クラウドビルド**(ACR タスク)でイメージをビルド・push・デプロイする。
+
+### コンテナ構成
+
+| ファイル | 役割 |
+|----------|------|
+| `Invoice-Search/backend/Dockerfile` | `python:3.12-slim` / requirements インストール / **非 root**(uid 10001) / `uvicorn app.main:app` を **8000** で起動。Mangum(Lambda shim)は使わない。 |
+| `Invoice-Search/backend/.dockerignore` | tests・キャッシュ・`.env*`(秘密)・`lambda_handler.py` 等を除外。 |
+
+- FastAPI 側は `CORSMiddleware` を `settings.cors_origins`(= `CORS_ORIGINS` をカンマ分割)で
+  構成済み。`Authorization`/`Content-Type` を許可、`allow_credentials=true`。
+- 認証は `AUTH_DISABLED=false` で Entra JWT 検証を有効化(トークン無し→401、
+  ロール不足→403)。
+
+### デプロイ手順
+
+前提: `az login` 済み・対象サブスクリプション選択済み。
+
+```bash
+az account set --subscription <SUBSCRIPTION_ID>
+
+# クラウドビルド(ACR 自動作成)→ 既存 ca-fine-api の image を差し替え
+az containerapp up \
+  --name ca-fine-api \
+  --resource-group rg-fine-verify-dev \
+  --source Invoice-Search/backend \
+  --ingress external \
+  --target-port 8000
+```
+
+`up` 実行後、非秘密の環境変数を設定する(**秘密は含めない**):
+
+```bash
+az containerapp update \
+  --name ca-fine-api --resource-group rg-fine-verify-dev \
+  --set-env-vars \
+    AZURE_TENANT_ID=555dafe8-9dde-4f98-ac9b-904e08b28c58 \
+    "AZURE_API_AUDIENCE=api://76537176-b582-4055-8b3e-cf89e84e1c08" \
+    REQUIRED_APP_ROLE=admin \
+    AUTH_DISABLED=false \
+    "CORS_ORIGINS=https://nice-water-054d5bc00.7.azurestaticapps.net"
+```
+
+- `INVOICE_APP_ID` / `INVOICE_API_URL` は**秘密扱い**のため、ここでは設定しない
+  (国税庁 API の App ID は PM が別途 secret として注入する)。
+- `minReplicas=0`(scale-to-zero)を維持する。`up`/`update` では触らない。
+
+### コスト影響
+
+- `az containerapp up --source` は **同一 RG に ACR(Basic)を自動作成**し、クラウドで
+  イメージをビルドする。ACR Basic は保管容量に応じた軽微な従量課金(概ね月 $5 前後)。
+- **RG(`rg-fine-verify-dev`)を削除すれば ACR も含め一括で消える**。
+- Container App 本体は `minReplicas=0` のため無アクセス時は実質無償のまま。
+
+### 動作確認
+
+```bash
+FQDN=$(az containerapp show --name ca-fine-api \
+  --resource-group rg-fine-verify-dev \
+  --query properties.configuration.ingress.fqdn -o tsv)
+
+# ルート(ヘルス)。初回はコールドスタートで数秒。
+curl -i "https://$FQDN/"
+
+# 認証: トークン無しで保護エンドポイントは 401
+curl -i -X POST "https://$FQDN/api/invoice-search" \
+  -H "Content-Type: application/json" \
+  -d '{"invoiceNum":["T1234567890123"]}'
+
+# CORS: 許可オリジンのプリフライトに Access-Control-Allow-Origin が付く
+curl -i -X OPTIONS "https://$FQDN/api/invoice-search" \
+  -H "Origin: https://nice-water-054d5bc00.7.azurestaticapps.net" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: authorization,content-type"
+```
+
+> 実際の番号検索(NTA API)成功確認は、PM が `INVOICE_APP_ID`/`INVOICE_API_URL` を
+> secret 注入した後に行う。
