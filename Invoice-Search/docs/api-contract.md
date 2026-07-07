@@ -4,8 +4,8 @@
 > 変更時は両側＋テスト（FE unit/E2E・BE unit/integration）を同時に更新すること。
 
 ## 認証
-- すべての `/api/*` は **Bearer JWT（Cognito ID トークン）** を要求（本番）。
-- フロントは `Authorization: Bearer <idToken>` を付与。`AUTH_DISABLED=true`（ローカル/モック）時はトークン不要。
+- すべての `/api/*` は **Bearer JWT（Entra ID アクセストークン）** を要求（本番）。
+- フロントは `Authorization: Bearer <accessToken>` を付与。`AUTH_DISABLED=true`（ローカル/モック）時はトークン不要。
 
 ## POST /api/invoice-search
 インボイス番号を国税庁 公表 Web-API で照会する。
@@ -39,8 +39,8 @@
 - `502` 上流（国税庁API）失敗
 
 ## POST /api/logs
-フロントの運用/エラーイベントを構造化ログ（CloudWatch）へ転送。`204 No Content`。要 JWT。
+フロントの運用/エラーイベントを構造化ログ（Azure Log Analytics）へ転送。`204 No Content`。要 JWT。
 
 ## フロント設定
-- `VITE_API_BASE_URL`: 任意。未設定なら**同一オリジン相対**（CloudFront 経由で `/api/*`→API Gateway）。
-- `VITE_COGNITO_USER_POOL_ID` / `VITE_COGNITO_CLIENT_ID`: 設定時は Cognito 認証、未設定ならモック認証。
+- `VITE_API_BASE_URL`: 任意。未設定なら**同一オリジン相対**（Static Web Apps 経由で `/api/*`→Container Apps）。
+- `VITE_AZURE_TENANT_ID` / `VITE_AZURE_CLIENT_ID`: 設定時は Entra ID (MSAL) 認証、未設定ならモック認証。

@@ -8,7 +8,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 ## 技術スタック（厳守）
 - Python 3.12.10 + FastAPI、Pydantic v2、必要に応じて SQLAlchemy 2.0。
-- DB は Amazon RDS for PostgreSQL（AWS 標準）。認証 Cognito / ファイル S3。
+- DB は Azure PostgreSQL Flexible Server（将来、現在 DBレス）。認証 Entra ID + MSAL。ファイルは将来 Azure Blob Storage。
 - 非同期 I/O を基本。型ヒント必須。
 
 ## 作業フロー
