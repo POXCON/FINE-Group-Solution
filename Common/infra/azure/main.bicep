@@ -1,0 +1,84 @@
+// ============================================================================
+// FINE Group Solution — Azure 基盤 IaC (DEV 検証 / 無料枠)
+// スコープ: サブスクリプション（Resource Group を作成し、各モジュールを呼び出す）
+// 参照 Issue: #70
+// ============================================================================
+targetScope = 'subscription'
+
+@description('環境名（リソース命名・タグに使用）')
+param environmentName string = 'verify-dev'
+
+@description('主要リソースのリージョン。Static Web Apps 以外はここを使用')
+param location string = 'japaneast'
+
+@description('Static Web Apps 用リージョン（japaneast 非対応のため eastasia を既定）')
+param staticWebAppLocation string = 'eastasia'
+
+@description('Resource Group 名')
+param resourceGroupName string = 'rg-fine-verify-dev'
+
+// 全リソース共通タグ
+var tags = {
+  Project: 'FINE-Group-Solution'
+  Environment: environmentName
+  System: 'platform'
+  ManagedBy: 'bicep'
+}
+
+// 1) Resource Group
+resource rg 'Microsoft.Resources/resourceGroups@2024-11-01' = {
+  name: resourceGroupName
+  location: location
+  tags: tags
+}
+
+// 2) Log Analytics ワークスペース
+module logAnalytics 'modules/log-analytics.bicep' = {
+  name: 'logAnalytics'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+  }
+}
+
+// 3) Container Apps Environment（Consumption）
+module containerAppsEnv 'modules/container-apps-env.bicep' = {
+  name: 'containerAppsEnv'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+    logAnalyticsWorkspaceName: logAnalytics.outputs.workspaceName
+  }
+}
+
+// 4) Container App（プレースホルダ / scale-to-zero）
+module containerApp 'modules/container-app.bicep' = {
+  name: 'containerApp'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+    environmentId: containerAppsEnv.outputs.environmentId
+  }
+}
+
+// 5) Static Web App（Free / eastasia）
+module staticWebApp 'modules/static-web-app.bicep' = {
+  name: 'staticWebApp'
+  scope: rg
+  params: {
+    location: staticWebAppLocation
+    tags: tags
+  }
+}
+
+@description('API (Container App) の外部 Ingress FQDN')
+output apiIngressFqdn string = containerApp.outputs.ingressFqdn
+
+@description('Static Web App の defaultHostname')
+output staticWebAppDefaultHostname string = staticWebApp.outputs.defaultHostname
+
+@description('作成した Resource Group 名')
+output resourceGroupNameOut string = rg.name
